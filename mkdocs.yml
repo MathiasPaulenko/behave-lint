@@ -10,10 +10,10 @@ edit_uri: edit/main/docs/
 theme:
   name: material
   features:
-    - navigation.tabs
     - navigation.sections
     - navigation.expand
     - navigation.indexes
+    - navigation.top
     - search.suggest
     - search.highlight
     - content.code.copy
