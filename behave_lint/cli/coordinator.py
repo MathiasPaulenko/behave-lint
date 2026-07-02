@@ -17,7 +17,7 @@ from behave_lint.cli.exit_codes import (
     determine_exit_code,
     internal_error_exit_code,
 )
-from behave_lint.cli.parser import parse_args
+from behave_lint.cli.parser import CLIArgs
 from behave_lint.cli.router import route_command
 from behave_lint.constants import (
     EXIT_CODE_SUCCESS,
@@ -25,28 +25,16 @@ from behave_lint.constants import (
 from behave_lint.rules.builtin import register_builtins
 
 
-def main(argv: Sequence[str] | None = None) -> int:
-    """Entry point for the behave-lint CLI.
+def run_lint(args: CLIArgs) -> int:
+    """Run the full lint flow: routing + lint pipeline.
 
     Args:
-        argv: Command-line arguments (default: sys.argv[1:]).
+        args: Parsed CLI arguments.
 
     Returns:
         Exit code (0, 1, 2, or 3).
     """
-    if argv is None:
-        argv = sys.argv[1:]
-
-    # Parse arguments
-    try:
-        args = parse_args(list(argv))
-    except SystemExit as exc:
-        # argparse calls sys.exit on --help and --version
-        code = exc.code if isinstance(exc.code, int) else 0
-        return code
-
     # Route informational commands (--list-rules, --explain)
-    # These don't require a full lint engine but need rules registered
     if args.list_rules or args.explain is not None:
         try:
             from behave_lint.plugins.manager import PluginManager
@@ -83,7 +71,35 @@ def main(argv: Sequence[str] | None = None) -> int:
         return internal_error_exit_code()
 
 
-def _run_lint(args: object, paths: list[str]) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
+    """Entry point for the behave-lint CLI.
+
+    Args:
+        argv: Command-line arguments (default: sys.argv[1:]).
+
+    Returns:
+        Exit code (0, 1, 2, or 3).
+    """
+    from behave_lint.cli.parser import app
+
+    if argv is None:
+        argv = sys.argv[1:]
+
+    try:
+        result = app(args=list(argv), standalone_mode=False)
+        return result if isinstance(result, int) else 0
+    except SystemExit as exc:
+        code = exc.code if isinstance(exc.code, int) else 0
+        return code
+    except Exception as exc:
+        if "No such option" in str(exc) or "Invalid value" in str(exc):
+            print(f"Error: {exc}", file=sys.stderr)
+            return config_error_exit_code()
+        print(f"Internal error: {exc}", file=sys.stderr)
+        return internal_error_exit_code()
+
+
+def _run_lint(args: CLIArgs, paths: list[str]) -> int:
     """Run the full lint pipeline.
 
     Args:
@@ -101,21 +117,21 @@ def _run_lint(args: object, paths: list[str]) -> int:
 
     # Build configuration overrides from CLI args
     overrides: dict[str, object] = {}
-    if args.select:  # type: ignore[attr-defined]
-        overrides["select"] = args.select  # type: ignore[attr-defined]
-    if args.ignore:  # type: ignore[attr-defined]
-        overrides["ignore"] = args.ignore  # type: ignore[attr-defined]
-    if args.output != "console":  # type: ignore[attr-defined]
-        overrides["output"] = args.output  # type: ignore[attr-defined]
-    if args.output_file is not None:  # type: ignore[attr-defined]
-        overrides["output_file"] = args.output_file  # type: ignore[attr-defined]
-    if args.fail_on:  # type: ignore[attr-defined]
-        overrides["fail_on"] = args.fail_on  # type: ignore[attr-defined]
+    if args.select:
+        overrides["select"] = args.select
+    if args.ignore:
+        overrides["ignore"] = args.ignore
+    if args.output != "console":
+        overrides["output"] = args.output
+    if args.output_file is not None:
+        overrides["output_file"] = args.output_file
+    if args.fail_on:
+        overrides["fail_on"] = args.fail_on
 
     # Load configuration
     try:
         config = load_config(
-            config_path=args.config,  # type: ignore[attr-defined]
+            config_path=args.config,
             overrides=overrides,
         )
     except Exception as exc:
@@ -135,7 +151,7 @@ def _run_lint(args: object, paths: list[str]) -> int:
 
     # Run the lint engine
     engine = LintEngine(config, registry)
-    want_fix = args.fix or args.unsafe_fixes  # type: ignore[attr-defined]
+    want_fix = args.fix or args.unsafe_fixes
     result = engine.lint(paths, collect_fixes=want_fix)
 
     # Apply auto-fixes if requested
@@ -143,12 +159,12 @@ def _run_lint(args: object, paths: list[str]) -> int:
         from behave_lint.autofix.coordinator import FixCoordinator
 
         fix_coord = FixCoordinator(
-            allow_unsafe=args.unsafe_fixes,  # type: ignore[attr-defined]
+            allow_unsafe=args.unsafe_fixes,
             dry_run=False,
         )
         fix_result = fix_coord.apply_edits(result.fixes)
 
-        if not args.quiet:  # type: ignore[attr-defined]
+        if not args.quiet:
             print(
                 f"Applied {fix_result.applied_count} fix(es), "
                 f"skipped {fix_result.skipped_count}, "
@@ -164,10 +180,10 @@ def _run_lint(args: object, paths: list[str]) -> int:
 
     # Render output
     reporter_mgr = ReporterManager()
-    output_format = args.output  # type: ignore[attr-defined]
-    output_file = args.output_file  # type: ignore[attr-defined]
+    output_format = args.output
+    output_file = args.output_file
 
-    if not args.quiet:  # type: ignore[attr-defined]
+    if not args.quiet:
         reporter_mgr.render(result, [output_format], output_file)
 
     # Determine exit code
@@ -177,7 +193,7 @@ def _run_lint(args: object, paths: list[str]) -> int:
         "info": Sev.INFO,
         "off": Sev.OFF,
     }
-    fail_on = fail_on_map.get(args.fail_on, Sev.WARNING)  # type: ignore[attr-defined]
+    fail_on = fail_on_map.get(args.fail_on, Sev.WARNING)
     exit_code = determine_exit_code(result.diagnostics, fail_on)
 
     return exit_code
@@ -188,4 +204,4 @@ def run() -> None:
     sys.exit(main())
 
 
-__all__ = ["main", "run"]
+__all__ = ["main", "run", "run_lint"]

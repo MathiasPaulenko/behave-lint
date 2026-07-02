@@ -46,6 +46,7 @@ classifiers = [
 ]
 dependencies = [
     "behave-model>=1.0,<2",
+    "typer>=0.12",
 ]
 
 [project.optional-dependencies]
@@ -80,7 +81,7 @@ Issues = "https://github.com/MathiasPaulenko/behave-lint/issues"
 Changelog = "https://github.com/MathiasPaulenko/behave-lint/blob/main/docs/CHANGELOG.md"
 
 [project.scripts]
-behave-lint = "behave_lint.cli:main"
+behave-lint = "behave_lint.cli:run"
 
 [project.entry-points."behave_lint.rules"]
 # Built-in rules registered here during M7
@@ -151,6 +152,10 @@ strict = false
 
 [[tool.mypy.overrides]]
 module = "behave_model.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "typer.*"
 ignore_missing_imports = true
 
 # ---------------------------------------------------------------------------

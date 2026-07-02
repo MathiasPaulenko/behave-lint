@@ -80,7 +80,7 @@ class TestMain:
         assert exit_code == EXIT_CODE_SUCCESS
 
     def test_json_output_flag(self, capsys) -> None:  # type: ignore[no-untyped-def]
-        exit_code = main(["--json", "features/"])
+        exit_code = main(["--output", "json", "features/"])
         assert exit_code == EXIT_CODE_SUCCESS
 
     def test_invalid_flag_returns_error_code(self, capsys) -> None:  # type: ignore[no-untyped-def]

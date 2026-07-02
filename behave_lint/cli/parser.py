@@ -1,4 +1,4 @@
-"""CLI argument parser — argparse-based parser for behave-lint.
+"""CLI argument parser — Typer-based parser for behave-lint.
 
 Supports all flags defined in SPECIFICATION.md Section 10 and API.md
 Section 10. Uses progressive disclosure: common flags are prominent,
@@ -9,8 +9,11 @@ See COMPONENT_DESIGN.md C01 and SPECIFICATION.md Section 10.
 
 from __future__ import annotations
 
-import argparse
 from dataclasses import dataclass, field
+from enum import StrEnum
+from typing import Annotated
+
+import typer
 
 from behave_lint import __version__
 
@@ -76,215 +79,138 @@ def _parse_rule_list(value: str) -> list[str]:
     return [r.strip() for r in value.split(",") if r.strip()]
 
 
-def create_parser() -> argparse.ArgumentParser:
-    """Create the argument parser for behave-lint.
+class OutputFormat(StrEnum):
+    console = "console"
+    json = "json"
+    markdown = "markdown"
+    sarif = "sarif"
+    github = "github"
 
-    Returns:
-        A configured ArgumentParser instance.
-    """
-    parser = argparse.ArgumentParser(
-        prog="behave-lint",
-        description=(
-            "A linter for Gherkin/Behave feature files. "
-            "Checks style, correctness, and best practices."
+
+class FailOn(StrEnum):
+    error = "error"
+    warning = "warning"
+    info = "info"
+    off = "off"
+
+
+app = typer.Typer(
+    name="behave-lint",
+    help=(
+        "A linter for Gherkin/Behave feature files. "
+        "Checks style, correctness, and best practices."
+    ),
+    no_args_is_help=False,
+    add_completion=False,
+)
+
+
+def _version_callback(value: bool) -> None:
+    if value:
+        print(f"behave-lint {__version__}")
+        raise typer.Exit
+
+
+@app.command()
+def lint(
+    paths: Annotated[
+        list[str] | None,
+        typer.Argument(help="Files or directories to lint."),
+    ] = None,
+    select: Annotated[
+        str | None,
+        typer.Option("--select", help="Enable specific rules (comma-separated)."),
+    ] = None,
+    ignore: Annotated[
+        str | None,
+        typer.Option("--ignore", help="Disable specific rules (comma-separated)."),
+    ] = None,
+    fail_on: Annotated[
+        FailOn,
+        typer.Option("--fail-on", help="Minimum severity for non-zero exit."),
+    ] = FailOn.warning,
+    output: Annotated[
+        OutputFormat,
+        typer.Option("--output", help="Output format."),
+    ] = OutputFormat.console,
+    output_file: Annotated[
+        str | None,
+        typer.Option("--output-file", help="Write output to file instead of stdout."),
+    ] = None,
+    color: Annotated[
+        bool, typer.Option("--color", help="Force enable colored output.")
+    ] = False,
+    no_color: Annotated[
+        bool, typer.Option("--no-color", help="Force disable colored output.")
+    ] = False,
+    verbose: Annotated[
+        bool, typer.Option("--verbose", help="Show progress and timing info.")
+    ] = False,
+    quiet: Annotated[
+        bool, typer.Option("--quiet", help="Suppress all output except diagnostics.")
+    ] = False,
+    statistics: Annotated[
+        bool, typer.Option("--statistics", help="Show diagnostic statistics.")
+    ] = False,
+    config: Annotated[
+        str | None,
+        typer.Option("--config", help="Explicit path to pyproject.toml."),
+    ] = None,
+    no_cache: Annotated[
+        bool, typer.Option("--no-cache", help="Disable cache for this run.")
+    ] = False,
+    clear_cache: Annotated[
+        bool, typer.Option("--clear-cache", help="Clear cache before running.")
+    ] = False,
+    fix: Annotated[
+        bool, typer.Option("--fix", help="Apply safe auto-fixes to .feature files.")
+    ] = False,
+    unsafe_fixes: Annotated[
+        bool,
+        typer.Option("--unsafe-fixes", help="Apply unsafe auto-fixes too."),
+    ] = False,
+    list_rules: Annotated[
+        bool, typer.Option("--list-rules", help="List all available rules and exit.")
+    ] = False,
+    explain: Annotated[
+        str | None,
+        typer.Option("--explain", help="Show documentation for a rule and exit."),
+    ] = None,
+    version: Annotated[
+        bool | None,
+        typer.Option(
+            "--version",
+            callback=_version_callback,
+            is_eager=True,
+            help="Print version and exit.",
         ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=(
-            "Examples:\n"
-            "  behave-lint features/\n"
-            "  behave-lint --output json --output-file results.json features/\n"
-            "  behave-lint --select BC001,BS001 features/\n"
-            "  behave-lint --list-rules\n"
-            "  behave-lint --explain BC001\n"
-        ),
-    )
+    ] = None,
+) -> int:
+    """Lint Gherkin/Behave feature files."""
+    from behave_lint.cli.coordinator import run_lint
 
-    # Positional arguments
-    parser.add_argument(
-        "paths",
-        nargs="*",
-        default=[],
-        help=(
-            "Files or directories to lint. "
-            "Defaults to 'features/' if it exists, else current directory."
-        ),
-    )
-
-    # Rule selection
-    rules_group = parser.add_argument_group("Rule Selection")
-    rules_group.add_argument(
-        "--select",
-        type=str,
-        default=None,
-        help="Enable specific rules (comma-separated). Overrides configuration.",
-    )
-    rules_group.add_argument(
-        "--ignore",
-        type=str,
-        default=None,
-        help="Disable specific rules (comma-separated). Overrides configuration.",
-    )
-    rules_group.add_argument(
-        "--fail-on",
-        type=str,
-        default="warning",
-        choices=["error", "warning", "info", "off"],
-        help="Minimum severity that causes non-zero exit (default: warning).",
-    )
-
-    # Output
-    output_group = parser.add_argument_group("Output")
-    output_group.add_argument(
-        "--output",
-        type=str,
-        default="console",
-        choices=["console", "json", "markdown", "sarif", "github"],
-        help="Output format (default: console).",
-    )
-    output_group.add_argument(
-        "--output-file",
-        type=str,
-        default=None,
-        help="Write output to file instead of stdout.",
-    )
-    output_group.add_argument(
-        "--json",
-        action="store_const",
-        const="json",
-        dest="output",
-        help="Shortcut for --output json.",
-    )
-    output_group.add_argument(
-        "--sarif",
-        action="store_const",
-        const="sarif",
-        dest="output",
-        help="Shortcut for --output sarif.",
-    )
-    output_group.add_argument(
-        "--color",
-        action="store_true",
-        default=False,
-        help="Force enable colored output.",
-    )
-    output_group.add_argument(
-        "--no-color",
-        action="store_true",
-        default=False,
-        help="Force disable colored output.",
-    )
-    output_group.add_argument(
-        "--verbose",
-        action="store_true",
-        default=False,
-        help="Show progress and timing information.",
-    )
-    output_group.add_argument(
-        "--quiet",
-        action="store_true",
-        default=False,
-        help="Suppress all output except diagnostics.",
-    )
-    output_group.add_argument(
-        "--statistics",
-        action="store_true",
-        default=False,
-        help="Show diagnostic statistics by rule and severity.",
-    )
-
-    # Configuration
-    config_group = parser.add_argument_group("Configuration")
-    config_group.add_argument(
-        "--config",
-        type=str,
-        default=None,
-        help="Explicit path to pyproject.toml.",
-    )
-    config_group.add_argument(
-        "--no-cache",
-        action="store_true",
-        default=False,
-        help="Disable cache for this run.",
-    )
-    config_group.add_argument(
-        "--clear-cache",
-        action="store_true",
-        default=False,
-        help="Clear cache before running.",
-    )
-
-    # Auto-fix
-    fix_group = parser.add_argument_group("Auto-Fix")
-    fix_group.add_argument(
-        "--fix",
-        action="store_true",
-        default=False,
-        help="Apply safe auto-fixes to .feature files.",
-    )
-    fix_group.add_argument(
-        "--unsafe-fixes",
-        action="store_true",
-        default=False,
-        help="Apply unsafe auto-fixes in addition to safe ones.",
-    )
-
-    # Informational
-    info_group = parser.add_argument_group("Informational")
-    info_group.add_argument(
-        "--list-rules",
-        action="store_true",
-        default=False,
-        help="List all available rules and exit.",
-    )
-    info_group.add_argument(
-        "--explain",
-        type=str,
-        default=None,
-        metavar="RULE_ID",
-        help="Show documentation for the specified rule and exit.",
-    )
-    info_group.add_argument(
-        "--version",
-        action="version",
-        version=f"behave-lint {__version__}",
-    )
-
-    return parser
-
-
-def parse_args(argv: list[str] | None = None) -> CLIArgs:
-    """Parse command-line arguments into a CLIArgs object.
-
-    Args:
-        argv: Argument list (default: sys.argv[1:]).
-
-    Returns:
-        Parsed CLIArgs object.
-    """
-    parser = create_parser()
-    ns = parser.parse_args(argv)
-
-    return CLIArgs(
-        paths=list(ns.paths) if ns.paths else [],
-        select=_parse_rule_list(ns.select) if ns.select else [],
-        ignore=_parse_rule_list(ns.ignore) if ns.ignore else [],
-        output=ns.output,
-        output_file=ns.output_file,
-        config=ns.config,
-        color=ns.color,
-        no_color=ns.no_color,
-        verbose=ns.verbose,
-        quiet=ns.quiet,
-        statistics=ns.statistics,
-        no_cache=ns.no_cache,
-        clear_cache=ns.clear_cache,
-        fix=ns.fix,
-        unsafe_fixes=ns.unsafe_fixes,
-        list_rules=ns.list_rules,
-        explain=ns.explain,
-        fail_on=ns.fail_on,
+    args = CLIArgs(
+        paths=list(paths) if paths else [],
+        select=_parse_rule_list(select) if select else [],
+        ignore=_parse_rule_list(ignore) if ignore else [],
+        output=output.value,
+        output_file=output_file,
+        config=config,
+        color=color,
+        no_color=no_color,
+        verbose=verbose,
+        quiet=quiet,
+        statistics=statistics,
+        no_cache=no_cache,
+        clear_cache=clear_cache,
+        fix=fix,
+        unsafe_fixes=unsafe_fixes,
+        list_rules=list_rules,
+        explain=explain,
+        fail_on=fail_on.value,
         version=False,
     )
+    return run_lint(args)
 
 
-__all__ = ["CLIArgs", "create_parser", "parse_args"]
+__all__ = ["CLIArgs", "FailOn", "OutputFormat", "app"]
