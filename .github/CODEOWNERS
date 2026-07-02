@@ -1,0 +1,28 @@
+# Repository ownership
+# Per REPOSITORY_DESIGN.md Section 2
+
+# Source code
+src/behave_lint/cli/         @MathiasPaulenko
+src/behave_lint/engine/      @MathiasPaulenko
+src/behave_lint/rules/       @MathiasPaulenko
+src/behave_lint/diagnostics/ @MathiasPaulenko
+src/behave_lint/configuration/ @MathiasPaulenko
+src/behave_lint/reporters/   @MathiasPaulenko
+src/behave_lint/infrastructure/ @MathiasPaulenko
+src/behave_lint/plugins/     @MathiasPaulenko
+src/behave_lint/models/      @MathiasPaulenko
+src/behave_lint/metadata/    @MathiasPaulenko
+src/behave_lint/statistics/  @MathiasPaulenko
+src/behave_lint/services/    @MathiasPaulenko
+
+# Tests
+tests/                       @MathiasPaulenko
+
+# Documentation
+docs/                        @MathiasPaulenko
+
+# CI/CD
+.github/                     @MathiasPaulenko
+
+# Root config
+pyproject.toml               @MathiasPaulenko
