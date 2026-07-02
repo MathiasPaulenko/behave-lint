@@ -63,3 +63,6 @@ $RECYCLE.BIN/
 *.tmp
 *.bak
 *.log
+
+# Reference documents (internal design specs, not published)
+ref/
