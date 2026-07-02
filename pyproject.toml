@@ -214,4 +214,5 @@ dev = [
     "mkdocs-material>=9.5",
     "mkdocstrings[python]>=0.25",
     "pymdown-extensions>=10.7",
+    "pip-audit>=2.7",
 ]
