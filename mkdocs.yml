@@ -1,0 +1,96 @@
+site_name: behave-lint
+site_description: >-
+  A fast, opinionated, extensible linter for Gherkin .feature files
+  and Behave test suites.
+site_url: https://github.com/MathiasPaulenko/behave-lint
+repo_url: https://github.com/MathiasPaulenko/behave-lint
+repo_name: MathiasPaulenko/behave-lint
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  icon:
+    repo: fontawesome/brands/github
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quick-start.md
+  - Usage:
+      - CLI Reference: usage/cli-reference.md
+      - Configuration: usage/configuration.md
+      - Output Formats: usage/output-formats.md
+      - Auto-Fix: usage/auto-fix.md
+  - Rules:
+      - Overview: rules/index.md
+      - Correctness (BC): rules/correctness.md
+      - Step Definitions (BD): rules/step-definitions.md
+      - Consistency (BK): rules/consistency.md
+      - Complexity (BX): rules/complexity.md
+      - Style (BS): rules/style.md
+      - Pedantic (BP): rules/pedantic.md
+  - Guides:
+      - Overview: guides/index.md
+      - CI/CD Integration: guides/ci-cd.md
+      - Pre-commit Hook: guides/pre-commit.md
+      - Custom Rules: guides/custom-rules.md
+      - Plugin Development: guides/plugin-development.md
+  - Development:
+      - Contributing: CONTRIBUTING.md
+      - Release Checklist: release-checklist.md
+      - Code of Conduct: CODE_OF_CONDUCT.md
+      - Security: SECURITY.md
+  - Reference:
+      - API: api/index.md
+      - Changelog: CHANGELOG.md
+      - Supported Versions: SUPPORTED_VERSIONS.md
+      - Roadmap: ROADMAP.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            show_source: true
+            show_root_heading: true
+            docstring_style: google
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - tables
+  - toc:
+      permalink: true
