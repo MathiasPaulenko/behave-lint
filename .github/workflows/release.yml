@@ -45,8 +45,6 @@ jobs:
       - name: Publish to PyPI
         if: ${{ !inputs.dry_run }}
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
 
       - name: Create GitHub Release
         if: ${{ !inputs.dry_run }}
