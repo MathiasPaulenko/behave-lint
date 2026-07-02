@@ -1,0 +1,8 @@
+[tool.behave-lint]
+select = ["BC001", "BC002", "BC003", "BC004", "BC005", "BC006", "BS001", "BS002", "BS003", "BK001", "BK002"]
+ignore = ["BP001", "BP002", "BP003", "BP004", "BP005"]
+fail_on = "warning"
+output = "console"
+
+[tool.behave-lint.severity]
+BK001 = "info"

@@ -1,0 +1,4 @@
+[tool.behave-lint]
+fail_on = "warning"
+output = "console"
+exclude = ["features/wip/"]

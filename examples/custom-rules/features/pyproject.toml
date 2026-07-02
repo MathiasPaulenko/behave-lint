@@ -1,0 +1,3 @@
+[tool.behave-lint]
+select = ["EX001", "BC001", "BS001"]
+fail_on = "warning"
