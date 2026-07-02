@@ -40,10 +40,10 @@ behave-lint features/ --ignore BP001,BP002
 
 ```bash
 # JSON
-behave-lint features/ --json
+behave-lint features/ --output json
 
 # SARIF (for GitHub Code Scanning)
-behave-lint features/ --sarif
+behave-lint features/ --output sarif
 
 # Markdown report
 behave-lint features/ --output markdown --output-file report.md

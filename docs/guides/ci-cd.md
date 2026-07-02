@@ -42,7 +42,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install behave-lint
-      - run: behave-lint features/ --sarif --output-file behave-lint.sarif
+      - run: behave-lint features/ --output sarif --output-file behave-lint.sarif
       - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: behave-lint.sarif
@@ -63,7 +63,7 @@ behave-lint:
   image: python:3.12
   script:
     - pip install behave-lint
-    - behave-lint features/ --json --output-file behave-lint-report.json
+    - behave-lint features/ --output json --output-file behave-lint-report.json
   artifacts:
     reports:
       junit: behave-lint-report.json

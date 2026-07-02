@@ -26,8 +26,6 @@ behave-lint [OPTIONS] [PATHS]...
 |--------|-------------|
 | `--output FORMAT` | Output format: `console`, `json`, `markdown`, `sarif`, `github`. Default: `console`. |
 | `--output-file FILE` | Write output to file instead of stdout. |
-| `--json` | Shortcut for `--output json`. |
-| `--sarif` | Shortcut for `--output sarif`. |
 | `--color` | Force enable colored output. |
 | `--no-color` | Force disable colored output. |
 | `--verbose` | Show progress and timing information. |
@@ -73,7 +71,7 @@ behave-lint [OPTIONS] [PATHS]...
 behave-lint .
 
 # Lint with JSON output to a file
-behave-lint features/ --json --output-file report.json
+behave-lint features/ --output json --output-file report.json
 
 # Apply safe fixes
 behave-lint features/ --fix

@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-07-02
+
+### Changed
+
+- CLI migrated from `argparse` to `Typer` for a richer help experience
+  with coloured output, progressive disclosure, and better error messages.
+- `CLIArgs` dataclass retained for backward compatibility; `parse_args`
+  and `create_parser` removed in favour of the Typer `app` object.
+- `--json` and `--sarif` shortcut flags removed — use `--output json` and
+  `--output sarif` instead.
+- Exit code for invalid CLI flags now correctly returns `2` (config error)
+  instead of `3` (internal error).
+
+### Added
+
+- `typer>=0.12` as a runtime dependency.
+- `run_lint()` public function in `behave_lint.cli.coordinator` for
+  programmatic invocation without going through `main()`.
+- `FailOn` and `OutputFormat` `StrEnum` types exported from
+  `behave_lint.cli.parser`.
+
+### Removed
+
+- `create_parser()` function from `behave_lint.cli.parser`.
+- `parse_args()` function from `behave_lint.cli.parser`.
+- `--json` shortcut flag (use `--output json`).
+- `--sarif` shortcut flag (use `--output sarif`).
+
 ## [1.0.0] - 2025-07-02
 
 ### Added

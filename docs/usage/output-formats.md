@@ -1,7 +1,7 @@
 # Output Formats
 
-`behave-lint` supports five output formats. Use `--output FORMAT` or
-the shortcut flags (`--json`, `--sarif`).
+`behave-lint` supports five output formats. Use `--output FORMAT` to
+select the desired format.
 
 ## Console
 
@@ -27,8 +27,8 @@ behave-lint features/ --no-color
 Machine-readable JSON with a stable, versioned schema.
 
 ```bash
-behave-lint features/ --json
-behave-lint features/ --json --output-file report.json
+behave-lint features/ --output json
+behave-lint features/ --output json --output-file report.json
 ```
 
 **File output:** Supported.
@@ -112,8 +112,8 @@ behave-lint features/ --json --output-file report.json
 SARIF v2.1.0 format for GitHub Code Scanning integration.
 
 ```bash
-behave-lint features/ --sarif
-behave-lint features/ --sarif --output-file behave-lint.sarif
+behave-lint features/ --output sarif
+behave-lint features/ --output sarif --output-file behave-lint.sarif
 ```
 
 **File output:** Supported.
