@@ -32,8 +32,8 @@ jobs:
 
       - run: uv run pytest -m "not performance and not slow"
 
-      - run: uv run ruff check src/ tests/
-      - run: uv run mypy src/
+      - run: uv run ruff check behave_lint/ tests/
+      - run: uv run mypy behave_lint/
 
       - run: uv build
 

@@ -74,7 +74,7 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          paths: [src]
+          paths: [behave_lint]
           options:
             show_source: true
             show_root_heading: true

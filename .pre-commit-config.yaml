@@ -22,5 +22,5 @@ repos:
     rev: v1.11.2
     hooks:
       - id: mypy
-        files: ^src/
+        files: ^behave_lint/
         additional_dependencies: []
