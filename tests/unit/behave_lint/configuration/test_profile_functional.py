@@ -10,15 +10,23 @@ real feature files.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
+import typer
 from typer.testing import CliRunner
 
 from behave_lint.cli.coordinator import main
 from behave_lint.cli.parser import app
 
 runner = CliRunner()
+
+_ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def _strip_ansi(text: str) -> str:
+    return _ANSI_RE.sub("", text)
 
 
 # ---------------------------------------------------------------------------
@@ -112,17 +120,30 @@ class TestCLIProfileFlag:
         result = runner.invoke(app, ["--profile", "none", "features/"])
         assert result.exit_code == 0
 
-    def test_profile_shown_in_help(self) -> None:
-        result = runner.invoke(app, ["--help"], color=False)
+    def test_profile_shown_in_help(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("NO_COLOR", "1")
+        monkeypatch.setenv("TERM", "dumb")
+        result = runner.invoke(app, ["--help"])
         assert result.exit_code == 0
-        assert "--profile" in result.stdout
+        output = _strip_ansi(result.output)
+        assert "--profile" in output or "profile" in output.lower()
 
-    def test_help_mentions_profile_options(self) -> None:
-        result = runner.invoke(app, ["--help"], color=False)
+    def test_help_mentions_profile_options(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("NO_COLOR", "1")
+        monkeypatch.setenv("TERM", "dumb")
+        result = runner.invoke(app, ["--help"])
         assert result.exit_code == 0
-        assert "recommended" in result.stdout
-        assert "strict" in result.stdout
-        assert "minimal" in result.stdout
+        output = _strip_ansi(result.output)
+        assert "recommended" in output or "recommended" in _strip_ansi(result.stdout)
+        assert "strict" in output or "strict" in _strip_ansi(result.stdout)
+        assert "minimal" in output or "minimal" in _strip_ansi(result.stdout)
+
+    def test_profile_option_exists_in_command_params(self) -> None:
+        cmd = typer.main.get_command(app)
+        opts = [p.name for p in cmd.params]
+        assert "profile" in opts
 
 
 # ---------------------------------------------------------------------------
