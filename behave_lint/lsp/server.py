@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from behave_lint.autofix.models import FixEdit
+from behave_lint.configuration.loader import load_config
 from behave_lint.engine.lint_engine import LintEngine
 from behave_lint.models.config import Config
 from behave_lint.models.enums import Severity
@@ -89,6 +90,33 @@ def _fix_edit_to_text_edit(edit: FixEdit) -> lsp.TextEdit:
     )
 
 
+def _build_config_from_workspace() -> Config:
+    """Build a Config from workspace settings merged with defaults.
+
+    Reads the global _workspace_config dict (populated by
+    workspace/didChangeConfiguration) and passes it as overrides
+    to load_config.
+
+    Returns:
+        A resolved Config object.
+    """
+    overrides: dict[str, object] = {}
+    ws = _workspace_config
+    if ws.get("select"):
+        overrides["select"] = ws["select"]
+    if ws.get("ignore"):
+        overrides["ignore"] = ws["ignore"]
+    if ws.get("profile") and ws["profile"] != "none":
+        overrides["profile"] = ws["profile"]
+    if ws.get("group"):
+        overrides["group"] = ws["group"]
+    if ws.get("severityOverrides"):
+        overrides["severity_overrides"] = ws["severityOverrides"]
+    if ws.get("ruleParams"):
+        overrides["rule_params"] = ws["ruleParams"]
+    return load_config(overrides=overrides or None)
+
+
 def _lint_content(
     content: str, file_uri: str
 ) -> tuple[list[lsp.Diagnostic], list[FixEdit]]:
@@ -104,7 +132,7 @@ def _lint_content(
     Returns:
         A tuple of (LSP diagnostics, fix edits) for this document.
     """
-    config = Config()
+    config = _build_config_from_workspace()
     registry = RuleRegistry()
     from behave_lint.rules.builtin import register_builtins
 
@@ -152,6 +180,7 @@ def _publish_diagnostics(ls: LanguageServer, doc: TextDocument) -> None:
 
 
 _fix_cache: dict[str, list[FixEdit]] = {}
+_workspace_config: dict[str, object] = {}
 
 
 def create_server() -> LanguageServer:
@@ -162,7 +191,7 @@ def create_server() -> LanguageServer:
     """
     server = LanguageServer(
         name="behave-lint",
-        version="2.1.0",
+        version="2.2.0",
         text_document_sync_kind=lsp.TextDocumentSyncKind.Full,
     )
 
@@ -192,6 +221,19 @@ def create_server() -> LanguageServer:
         ls.text_document_publish_diagnostics(
             lsp.PublishDiagnosticsParams(uri=uri, diagnostics=[])
         )
+
+    @server.feature(lsp.WORKSPACE_DID_CHANGE_CONFIGURATION)
+    def did_change_configuration(
+        ls: LanguageServer,
+        params: lsp.DidChangeConfigurationParams,
+    ) -> None:
+        """Handle workspace/didChangeConfiguration — update settings and re-lint."""
+        settings = params.settings
+        if isinstance(settings, dict):
+            _workspace_config.update(settings)
+        for doc in ls.workspace.text_documents.values():
+            if doc.uri.endswith(".feature"):
+                _publish_diagnostics(ls, doc)
 
     @server.feature(
         lsp.TEXT_DOCUMENT_CODE_ACTION,
@@ -231,4 +273,10 @@ def main() -> None:
     server.start_io()
 
 
-__all__ = ["_fix_edit_to_text_edit", "_lint_content", "create_server", "main"]
+__all__ = [
+    "_build_config_from_workspace",
+    "_fix_edit_to_text_edit",
+    "_lint_content",
+    "create_server",
+    "main",
+]

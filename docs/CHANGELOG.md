@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2025-07-03
+
+### Added
+
+- `workspace/didChangeConfiguration` handler in LSP server — reads `select`, `ignore`, `profile`, `group`, `severityOverrides`, and `ruleParams` from editor settings.
+- `_build_config_from_workspace` merges editor settings with `pyproject.toml` and defaults via `load_config`.
+- Re-lints all open `.feature` documents when workspace config changes.
+- 4 new tests for workspace config (defaults, ignore, profile, select).
+- LSP docs updated with editor configuration section, settings table, and VS Code/Neovim examples.
+
 ## [2.1.0] - 2025-07-03
 
 ### Added

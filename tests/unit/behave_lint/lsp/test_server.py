@@ -325,3 +325,74 @@ class TestFixCache:
         uri = "file:///close_test.feature"
         _fix_cache.pop(uri, None)
         assert "file:///close_test.feature" not in _fix_cache
+
+
+class TestWorkspaceConfig:
+    """Tests for workspace configuration integration."""
+
+    def test_default_config_when_no_workspace_settings(self) -> None:
+        """With no workspace config, _build_config_from_workspace returns defaults."""
+        from behave_lint.lsp.server import (
+            _build_config_from_workspace,
+            _workspace_config,
+        )
+
+        _workspace_config.clear()
+        config = _build_config_from_workspace()
+        assert config.profile == "none"
+        assert config.select == []
+        assert config.ignore == []
+
+    def test_workspace_ignore_filters_diagnostics(self) -> None:
+        """Setting ignore in workspace config should filter diagnostics."""
+        from behave_lint.lsp.server import _lint_content, _workspace_config
+
+        _workspace_config.clear()
+        content = (
+            "@SmokeTest\nFeature: Test\n\n  Scenario: A scenario\n    Given a step\n"
+        )
+        default_diags, _ = _lint_content(content, "file:///test.feature")
+        assert len(default_diags) > 0
+
+        _workspace_config["ignore"] = [
+            "BS001",
+            "BP001",
+            "BP002",
+            "BP004",
+            "BP006",
+            "BS005",
+            "BP007",
+            "BD003",
+        ]
+        filtered_diags, _ = _lint_content(content, "file:///test.feature")
+        assert len(filtered_diags) == 0
+        _workspace_config.clear()
+
+    def test_workspace_profile_changes_diagnostics(self) -> None:
+        """Setting profile to 'recommended' should reduce diagnostics."""
+        from behave_lint.lsp.server import _lint_content, _workspace_config
+
+        _workspace_config.clear()
+        content = (
+            "@SmokeTest\nFeature: Test\n\n  Scenario: A scenario\n    Given a step\n"
+        )
+        default_diags, _ = _lint_content(content, "file:///test.feature")
+
+        _workspace_config["profile"] = "recommended"
+        profile_diags, _ = _lint_content(content, "file:///test.feature")
+        assert len(profile_diags) < len(default_diags)
+        _workspace_config.clear()
+
+    def test_workspace_select_enables_specific_rules(self) -> None:
+        """Setting select in workspace config should only enable those rules."""
+        from behave_lint.lsp.server import _lint_content, _workspace_config
+
+        _workspace_config.clear()
+        content = (
+            "@SmokeTest\nFeature: Test\n\n  Scenario: A scenario\n    Given a step\n"
+        )
+        _workspace_config["select"] = ["BS001"]
+        diags, _ = _lint_content(content, "file:///test.feature")
+        rule_ids = {d.code for d in diags}
+        assert rule_ids == {"BS001"}
+        _workspace_config.clear()
