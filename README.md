@@ -203,6 +203,8 @@ Runnable example projects in the [`examples/`](examples/) directory:
 
 ## Documentation
 
+Full documentation is hosted at **[mathiaspaulenko.github.io/behave-lint](https://mathiaspaulenko.github.io/behave-lint/)**.
+
 ### User guide
 
 - [Installation](docs/getting-started/installation.md)

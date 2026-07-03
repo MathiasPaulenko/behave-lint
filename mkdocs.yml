@@ -2,7 +2,7 @@ site_name: behave-lint
 site_description: >-
   A fast, opinionated, extensible linter for Gherkin .feature files
   and Behave test suites.
-site_url: https://github.com/MathiasPaulenko/behave-lint
+site_url: https://mathiaspaulenko.github.io/behave-lint/
 repo_url: https://github.com/MathiasPaulenko/behave-lint
 repo_name: MathiasPaulenko/behave-lint
 edit_uri: edit/main/docs/
