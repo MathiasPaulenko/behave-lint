@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
-      - run: uv sync --frozen
+      - run: uv sync
       - run: uv run ruff check behave_lint/ tests/
       - run: uv run ruff format --check behave_lint/ tests/
       - run: uv run mypy behave_lint/
@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
-      - run: uv sync --frozen
+      - run: uv sync
       - run: uv run pytest -m "not performance and not slow" --cov=behave_lint --cov-report=xml
       - uses: actions/upload-artifact@v4
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
@@ -50,5 +50,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
-      - run: uv sync --frozen
+      - run: uv sync
       - run: uv run pytest -m architecture

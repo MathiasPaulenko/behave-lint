@@ -119,7 +119,7 @@ class WatchMode:
         self._lint_once()
 
 
-class _FeatureFileHandler(FileSystemEventHandler):  # type: ignore[misc]
+class _FeatureFileHandler(FileSystemEventHandler):
     """File system event handler for .feature files."""
 
     def __init__(self, watch_mode: WatchMode) -> None:

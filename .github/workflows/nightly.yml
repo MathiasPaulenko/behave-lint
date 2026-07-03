@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
-      - run: uv sync --frozen
+      - run: uv sync
 
       - run: uv run python scripts/generate_fixtures.py
       - run: uv run pytest -m performance -v
