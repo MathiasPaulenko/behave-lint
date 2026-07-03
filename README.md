@@ -25,6 +25,8 @@ real-time feedback during development.
 | Trailing punctuation in steps clutters reports | **BD005** strips it automatically |
 | No Given-When-Then ordering enforcement | **BC001** catches structural violations |
 | Feature files grow unchecked in complexity | **BX001-BX005** enforce limits |
+| Hardcoded passwords leak into version control | **BSEC001** flags hardcoded secrets |
+| Ableist language goes unnoticed in tests | **BACC001** suggests inclusive alternatives |
 
 ## Installation
 
@@ -101,12 +103,15 @@ behave-lint --explain BC001
 
 | Category | Prefix | Rules | Default Severity |
 |----------|--------|-------|------------------|
-| [Correctness](docs/rules/correctness.md) | BC | 6 | Error |
+| [Correctness](docs/rules/correctness.md) | BC | 10 | Error |
 | [Step Definitions](docs/rules/step-definitions.md) | BD | 5 | Warning |
 | [Consistency](docs/rules/consistency.md) | BK | 5 | Warning / Info |
-| [Complexity](docs/rules/complexity.md) | BX | 5 | Warning |
-| [Style](docs/rules/style.md) | BS | 5 | Warning |
-| [Pedantic](docs/rules/pedantic.md) | BP | 5 | Info |
+| [Complexity](docs/rules/complexity.md) | BX | 6 | Warning |
+| [Style](docs/rules/style.md) | BS | 8 | Warning |
+| [Pedantic](docs/rules/pedantic.md) | BP | 7 | Info |
+| [Security](docs/rules/security.md) | BSEC | 3 | Error |
+| [I18N](docs/rules/i18n.md) | BI18N | 3 | Warning |
+| [Accessibility](docs/rules/accessibility.md) | BACC | 3 | Warning |
 
 ### Auto-fixable rules
 
@@ -218,6 +223,9 @@ Runnable example projects in the [`examples/`](examples/) directory:
 - [Complexity (BX)](docs/rules/complexity.md)
 - [Style (BS)](docs/rules/style.md)
 - [Pedantic (BP)](docs/rules/pedantic.md)
+- [Security (BSEC)](docs/rules/security.md)
+- [I18N (BI18N)](docs/rules/i18n.md)
+- [Accessibility (BACC)](docs/rules/accessibility.md)
 
 ### Guides
 
