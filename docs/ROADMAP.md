@@ -4,8 +4,8 @@ This document summarizes the implementation roadmap.
 
 ## Current Status
 
-**Beta** — core functionality complete. 31 built-in rules, auto-fix,
-plugins, reporters, and full documentation implemented.
+**Stable** — v1.1.0 released. 31 built-in rules, auto-fix, plugins,
+reporters, Typer-based CLI, and full documentation. Available on PyPI.
 
 ## Milestones
 
@@ -22,7 +22,8 @@ plugins, reporters, and full documentation implemented.
 | M9 | Plugins | Complete | 0.7.0-beta |
 | M10 | Auto-Fix | Complete | 0.8.0-beta |
 | M11 | Documentation | Complete | 0.9.0-beta |
-| M12 | v1.0 | In progress | 1.0.0 |
+| M12 | v1.0 | Complete | 1.0.0 |
+| M13 | CLI Typer Migration | Complete | 1.1.0 |
 
 ## Critical Path
 
@@ -36,10 +37,11 @@ M1 → M2 → M6 → M7 → M10 → M12
 - **Beta (0.5–0.9):** Public releases, community feedback.
 - **RC (0.99.x):** Feature-frozen, bug fixes only.
 - **Stable (1.0.0):** First production release.
+- **v1.1.0:** CLI migrated to Typer, documentation updated.
 
-## Future (Post-v1.0)
+## Future (Post-v1.1)
 
-- v1.1+: Profiles, groups, additional rules, cookiecutter template.
+- v1.2+: Profiles, groups, additional rules, cookiecutter template.
 - v2.0+: LSP server, IDE extensions, watch mode, new categories.
 - v3.0+: AI rule suggestions, rule marketplace, cloud rules.
 - v4.0+: Industry packs, compliance packs.
