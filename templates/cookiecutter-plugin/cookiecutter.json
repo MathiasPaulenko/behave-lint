@@ -1,0 +1,16 @@
+{
+    "project_name": "behave-lint-my-plugin",
+    "plugin_name": "my_plugin",
+    "class_name": "MyPlugin",
+    "rule_id": "XM001",
+    "rule_name": "my-custom-rule",
+    "rule_title": "My custom rule",
+    "rule_description": "Detects something that needs linting.",
+    "category": ["style", "correctness", "pedantic", "complexity", "consistency", "step_definitions"],
+    "severity": ["warning", "error", "info"],
+    "author_name": "Your Name",
+    "author_email": "you@example.com",
+    "version": "0.1.0",
+    "license": ["MIT", "Apache-2.0", "GPL-3.0"],
+    "include_auto_fix": ["no", "yes"]
+}

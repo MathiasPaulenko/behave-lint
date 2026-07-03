@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2025-07-03
+
+### Added
+
+- Cookiecutter plugin template — scaffolds a complete plugin project
+  with rule skeleton, tests, README, and entry points.
+  Usage: `cookiecutter gh:MathiasPaulenko/behave-lint --directory templates/cookiecutter-plugin`
+- Template supports optional auto-fix skeleton (`include_auto_fix`).
+- 7 new tests verifying template generation and importability.
+- Documentation: updated plugin development guide with quick start.
+
 ## [1.6.0] - 2025-07-03
 
 ### Added

@@ -4,9 +4,10 @@ This document summarizes the implementation roadmap.
 
 ## Current Status
 
-**Stable** — v1.6.0 released. 41 built-in rules, auto-fix (11 rules),
-profiles, groups, incremental cache, plugins, reporters, Typer-based CLI,
-and full documentation. Available on PyPI.
+**Stable** — v1.7.0 released. 41 built-in rules, auto-fix (11 rules),
+profiles, groups, incremental cache, cookiecutter plugin template,
+plugins, reporters, Typer-based CLI, and full documentation.
+Available on PyPI.
 
 ## Milestones
 
@@ -27,6 +28,7 @@ and full documentation. Available on PyPI.
 | M13 | CLI Typer Migration | Complete | 1.1.0 |
 | M14 | Rule Groups | Complete | 1.5.0 |
 | M15 | Incremental Cache | Complete | 1.6.0 |
+| M16 | Cookiecutter Plugin Template | Complete | 1.7.0 |
 
 ## Critical Path
 
@@ -44,8 +46,9 @@ M1 → M2 → M6 → M7 → M10 → M12
 
 ## Future (Post-v1.1)
 
-- v1.2+: Profiles, groups, additional rules, cookiecutter template.
+- v1.2+: Profiles, groups, additional rules.
 - v1.5+: More auto-fixes, incremental cache.
+- v1.7+: Cookiecutter plugin template.
 - v2.0+: LSP server, IDE extensions, watch mode, new categories.
 - v3.0+: AI rule suggestions, rule marketplace, cloud rules.
 - v4.0+: Industry packs, compliance packs.

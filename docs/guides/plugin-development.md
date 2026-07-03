@@ -11,7 +11,43 @@ configuration providers.
 | Reporters | `behave_lint.reporters` | Custom output formats |
 | Config | `behave_lint.config_sources` | Configuration providers |
 
-## Creating a plugin
+## Quick start with the cookiecutter template
+
+The fastest way to create a plugin is using the cookiecutter template
+included in this repository:
+
+```bash
+# Install cookiecutter
+pip install cookiecutter
+
+# Generate a plugin from the template
+cookiecutter https://github.com/MathiasPaulenko/behave-lint --directory templates/cookiecutter-plugin
+```
+
+You'll be prompted for:
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| `project_name` | PyPI package name | `behave-lint-acme-rules` |
+| `plugin_name` | Python module name | `acme_rules` |
+| `class_name` | PascalCase rule class name | `AcmeRules` |
+| `rule_id` | Unique rule ID | `XA001` |
+| `rule_name` | Kebab-case rule name | `acme-check` |
+| `rule_title` | Human-readable title | `Acme compliance check` |
+| `category` | Rule category | `style`, `correctness`, etc. |
+| `severity` | Default severity | `warning`, `error`, `info` |
+| `include_auto_fix` | Include auto-fix skeleton | `yes` or `no` |
+
+The generated project includes:
+
+- `pyproject.toml` with entry points configured
+- Rule skeleton with `RuleMetadata`, `check()`, and optional `get_fixes()`
+- Test suite with fixtures
+- README with usage examples
+- MIT LICENSE
+- `.gitignore`
+
+## Creating a plugin manually
 
 ### 1. Set up your package
 
