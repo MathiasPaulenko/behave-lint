@@ -31,8 +31,8 @@ class TestHardcodedDateFormatRule:
     def test_detects_slash_date(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            'Feature: Test\n\n'
-            '  Scenario: Booking\n'
+            "Feature: Test\n\n"
+            "  Scenario: Booking\n"
             '    Given the date is "12/31/2024"\n',
         )
         rule = HardcodedDateFormatRule()
@@ -43,8 +43,8 @@ class TestHardcodedDateFormatRule:
     def test_detects_iso_date(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            'Feature: Test\n\n'
-            '  Scenario: Booking\n'
+            "Feature: Test\n\n"
+            "  Scenario: Booking\n"
             '    Given the date is "2024-12-31"\n',
         )
         rule = HardcodedDateFormatRule()
@@ -55,8 +55,8 @@ class TestHardcodedDateFormatRule:
     def test_no_false_positive_placeholder(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            'Feature: Test\n\n'
-            '  Scenario: Booking\n'
+            "Feature: Test\n\n"
+            "  Scenario: Booking\n"
             '    Given the date is "<booking_date>"\n',
         )
         rule = HardcodedDateFormatRule()
@@ -75,9 +75,7 @@ class TestHardcodedCurrencyRule:
     def test_detects_dollar_sign(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            'Feature: Test\n\n'
-            '  Scenario: Pay\n'
-            '    Given the total is "$99.99"\n',
+            'Feature: Test\n\n  Scenario: Pay\n    Given the total is "$99.99"\n',
         )
         rule = HardcodedCurrencyRule()
         diags = rule.check(feature, Config())
@@ -87,9 +85,7 @@ class TestHardcodedCurrencyRule:
     def test_detects_euro_sign(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            "Feature: Test\n\n"
-            "  Scenario: Pay\n"
-            '    Given the total is "\u20ac50"\n',
+            'Feature: Test\n\n  Scenario: Pay\n    Given the total is "\u20ac50"\n',
         )
         rule = HardcodedCurrencyRule()
         diags = rule.check(feature, Config())
@@ -99,9 +95,7 @@ class TestHardcodedCurrencyRule:
     def test_no_false_positive_no_currency(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            'Feature: Test\n\n'
-            '  Scenario: Pay\n'
-            '    Given the total is "<amount>"\n',
+            'Feature: Test\n\n  Scenario: Pay\n    Given the total is "<amount>"\n',
         )
         rule = HardcodedCurrencyRule()
         diags = rule.check(feature, Config())
@@ -132,8 +126,8 @@ class TestNonAsciiStepTextRule:
     def test_no_false_positive_ascii(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            'Feature: Test\n\n'
-            '  Scenario: Order\n'
+            "Feature: Test\n\n"
+            "  Scenario: Order\n"
             '    Given the customer selects "coffee"\n',
         )
         rule = NonAsciiStepTextRule()

@@ -121,8 +121,7 @@ class AbleistLanguageRule(Rule):
                     diagnostics.append(
                         self.diagnostic(
                             message=(
-                                f"Step contains ableist term '{term}': "
-                                f"'{text.strip()}'"
+                                f"Step contains ableist term '{term}': '{text.strip()}'"
                             ),
                             node=step,
                             suggestion=f"Use '{alternative}' instead.",
@@ -183,12 +182,8 @@ class MissingAccessibilityScenarioRule(Rule):
         auto_fix=AutoFixCapability.NONE,
     )
 
-    _UI_TAGS: ClassVar[frozenset[str]] = frozenset(
-        {"ui", "frontend", "web", "e2e"}
-    )
-    _A11Y_TAGS: ClassVar[frozenset[str]] = frozenset(
-        {"accessibility", "a11y"}
-    )
+    _UI_TAGS: ClassVar[frozenset[str]] = frozenset({"ui", "frontend", "web", "e2e"})
+    _A11Y_TAGS: ClassVar[frozenset[str]] = frozenset({"accessibility", "a11y"})
 
     def check(self, feature: Any, config: Config) -> list[Diagnostic]:
         diagnostics: list[Diagnostic] = []
@@ -260,12 +255,12 @@ class ColorOnlyContrastRule(Rule):
             RuleExample(
                 before=(
                     "Feature: Status display\n\n"
-                    '  Scenario: Error state\n'
-                    '    Then the button is red\n'
+                    "  Scenario: Error state\n"
+                    "    Then the button is red\n"
                 ),
                 after=(
                     "Feature: Status display\n\n"
-                    '  Scenario: Error state\n'
+                    "  Scenario: Error state\n"
                     '    Then the button is red and shows "Error"\n'
                 ),
                 description="Add a text indicator in addition to color.",

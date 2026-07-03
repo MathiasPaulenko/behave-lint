@@ -31,8 +31,8 @@ class TestHardcodedSecretsRule:
     def test_detects_hardcoded_password(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            'Feature: Test\n\n'
-            '  Scenario: Login\n'
+            "Feature: Test\n\n"
+            "  Scenario: Login\n"
             '    Given the user enters password = "hunter2pass"\n',
         )
         rule = HardcodedSecretsRule()
@@ -44,8 +44,8 @@ class TestHardcodedSecretsRule:
     def test_detects_api_key(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            'Feature: Test\n\n'
-            '  Scenario: API call\n'
+            "Feature: Test\n\n"
+            "  Scenario: API call\n"
             '    Given the api_key = "sk_live_abc123def456ghi789jkl"\n',
         )
         rule = HardcodedSecretsRule()
@@ -56,8 +56,8 @@ class TestHardcodedSecretsRule:
     def test_no_false_positive_placeholder(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            'Feature: Test\n\n'
-            '  Scenario: Login\n'
+            "Feature: Test\n\n"
+            "  Scenario: Login\n"
             '    Given the user enters password = "<password>"\n',
         )
         rule = HardcodedSecretsRule()
@@ -67,8 +67,8 @@ class TestHardcodedSecretsRule:
     def test_no_false_positive_no_sensitive_keyword(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            'Feature: Test\n\n'
-            '  Scenario: Config\n'
+            "Feature: Test\n\n"
+            "  Scenario: Config\n"
             '    Given the value = "abcdefgh123"\n',
         )
         rule = HardcodedSecretsRule()
@@ -87,8 +87,8 @@ class TestUrlWithCredentialsRule:
     def test_detects_url_with_credentials(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            'Feature: Test\n\n'
-            '  Scenario: API\n'
+            "Feature: Test\n\n"
+            "  Scenario: API\n"
             '    Given the url is "https://admin:secret@api.example.com"\n',
         )
         rule = UrlWithCredentialsRule()
@@ -100,8 +100,8 @@ class TestUrlWithCredentialsRule:
     def test_no_false_positive_clean_url(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            'Feature: Test\n\n'
-            '  Scenario: API\n'
+            "Feature: Test\n\n"
+            "  Scenario: API\n"
             '    Given the url is "https://api.example.com"\n',
         )
         rule = UrlWithCredentialsRule()
@@ -120,10 +120,7 @@ class TestSensitiveTagRule:
     def test_detects_production_tag_on_feature(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            "@production\n"
-            "Feature: Test\n\n"
-            "  Scenario: A\n"
-            "    Given a step\n",
+            "@production\nFeature: Test\n\n  Scenario: A\n    Given a step\n",
         )
         rule = SensitiveTagRule()
         diags = rule.check(feature, Config())
@@ -134,10 +131,7 @@ class TestSensitiveTagRule:
     def test_detects_live_tag_on_scenario(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            "Feature: Test\n\n"
-            "  @live\n"
-            "  Scenario: A\n"
-            "    Given a step\n",
+            "Feature: Test\n\n  @live\n  Scenario: A\n    Given a step\n",
         )
         rule = SensitiveTagRule()
         diags = rule.check(feature, Config())
@@ -147,10 +141,7 @@ class TestSensitiveTagRule:
     def test_no_false_positive_safe_tag(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            "@staging\n"
-            "Feature: Test\n\n"
-            "  Scenario: A\n"
-            "    Given a step\n",
+            "@staging\nFeature: Test\n\n  Scenario: A\n    Given a step\n",
         )
         rule = SensitiveTagRule()
         diags = rule.check(feature, Config())

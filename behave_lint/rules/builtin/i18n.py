@@ -132,12 +132,12 @@ class HardcodedCurrencyRule(Rule):
             RuleExample(
                 before=(
                     "Feature: Payment\n\n"
-                    '  Scenario: Pay amount\n'
+                    "  Scenario: Pay amount\n"
                     '    Given the total is "$99.99"\n'
                 ),
                 after=(
                     "Feature: Payment\n\n"
-                    '  Scenario: Pay amount\n'
+                    "  Scenario: Pay amount\n"
                     '    Given the total is "<amount>"\n'
                 ),
                 description="Replace hardcoded currency with a placeholder.",
@@ -203,7 +203,7 @@ class NonAsciiStepTextRule(Rule):
                 before=(
                     "Feature: Caf\u00e9 menu\n\n"
                     "  Scenario: Order coffee\n"
-                    "    Given the customer selects \"caf\u00e9 au lait\"\n"
+                    '    Given the customer selects "caf\u00e9 au lait"\n'
                 ),
                 after=(
                     "Feature: Cafe menu\n\n"
@@ -228,8 +228,7 @@ class NonAsciiStepTextRule(Rule):
                     diagnostics.append(
                         self.diagnostic(
                             message=(
-                                f"Step contains non-ASCII characters: "
-                                f"'{text.strip()}'"
+                                f"Step contains non-ASCII characters: '{text.strip()}'"
                             ),
                             node=step,
                             suggestion=(

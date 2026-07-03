@@ -31,9 +31,7 @@ class TestAbleistLanguageRule:
     def test_detects_ableist_in_scenario_name(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            "Feature: Test\n\n"
-            "  Scenario: Register disabled user\n"
-            "    Given a step\n",
+            "Feature: Test\n\n  Scenario: Register disabled user\n    Given a step\n",
         )
         rule = AbleistLanguageRule()
         diags = rule.check(feature, Config())
@@ -44,9 +42,7 @@ class TestAbleistLanguageRule:
     def test_detects_ableist_in_step(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            "Feature: Test\n\n"
-            "  Scenario: Normal scenario\n"
-            "    Given a disabled user\n",
+            "Feature: Test\n\n  Scenario: Normal scenario\n    Given a disabled user\n",
         )
         rule = AbleistLanguageRule()
         diags = rule.check(feature, Config())
@@ -56,9 +52,7 @@ class TestAbleistLanguageRule:
     def test_detects_wheelchair_bound(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            "Feature: Test\n\n"
-            "  Scenario: Access\n"
-            '    Given a wheelchair-bound user\n',
+            "Feature: Test\n\n  Scenario: Access\n    Given a wheelchair-bound user\n",
         )
         rule = AbleistLanguageRule()
         diags = rule.check(feature, Config())
@@ -115,9 +109,7 @@ class TestMissingAccessibilityScenarioRule:
     def test_no_diag_when_no_ui_tag(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            "Feature: API test\n\n"
-            "  Scenario: Call endpoint\n"
-            "    Given the API is up\n",
+            "Feature: API test\n\n  Scenario: Call endpoint\n    Given the API is up\n",
         )
         rule = MissingAccessibilityScenarioRule()
         diags = rule.check(feature, Config())
@@ -135,9 +127,7 @@ class TestColorOnlyContrastRule:
     def test_detects_color_only(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            'Feature: Test\n\n'
-            '  Scenario: Status\n'
-            '    Then the button is red\n',
+            "Feature: Test\n\n  Scenario: Status\n    Then the button is red\n",
         )
         rule = ColorOnlyContrastRule()
         diags = rule.check(feature, Config())
@@ -148,8 +138,8 @@ class TestColorOnlyContrastRule:
     def test_no_false_positive_with_text_indicator(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            'Feature: Test\n\n'
-            '  Scenario: Status\n'
+            "Feature: Test\n\n"
+            "  Scenario: Status\n"
             '    Then the button is red and shows "Error"\n',
         )
         rule = ColorOnlyContrastRule()
@@ -159,9 +149,7 @@ class TestColorOnlyContrastRule:
     def test_no_false_positive_no_color(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            'Feature: Test\n\n'
-            '  Scenario: Status\n'
-            '    Then the button shows "Error"\n',
+            'Feature: Test\n\n  Scenario: Status\n    Then the button shows "Error"\n',
         )
         rule = ColorOnlyContrastRule()
         diags = rule.check(feature, Config())

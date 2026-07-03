@@ -66,12 +66,12 @@ class HardcodedSecretsRule(Rule):
                 before=(
                     "Feature: Login\n\n"
                     "  Scenario: Login with credentials\n"
-                    "    Given the user enters password \"hunter2\"\n"
+                    '    Given the user enters password "hunter2"\n'
                 ),
                 after=(
                     "Feature: Login\n\n"
                     "  Scenario: Login with credentials\n"
-                    "    Given the user enters password \"<password>\"\n"
+                    '    Given the user enters password "<password>"\n'
                 ),
                 description="Replace hardcoded password with a placeholder.",
             ),
@@ -245,8 +245,7 @@ class SensitiveTagRule(Rule):
                         ),
                         node=feature,
                         suggestion=(
-                            "Review this tag. Consider using @staging "
-                            "or @test instead."
+                            "Review this tag. Consider using @staging or @test instead."
                         ),
                         severity=Severity.WARNING,
                     )
