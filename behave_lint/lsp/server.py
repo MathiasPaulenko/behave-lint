@@ -85,6 +85,9 @@ def _lint_content(content: str, file_uri: str) -> list[lsp.Diagnostic]:
     """
     config = Config()
     registry = RuleRegistry()
+    from behave_lint.rules.builtin import register_builtins
+
+    register_builtins(registry)
     engine = LintEngine(config, registry)
 
     with tempfile.NamedTemporaryFile(

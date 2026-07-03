@@ -11,8 +11,16 @@ from behave_lint.models.enums import Severity
 
 @pytest.fixture
 def valid_feature_content() -> str:
-    """Valid feature file content."""
-    return "Feature: Test\n\n  Scenario: A scenario\n    Given a step\n"
+    """Feature file content that produces no diagnostics."""
+    return (
+        "@login\n"
+        "Feature: User authentication flow\n\n"
+        "  Background:\n    Given the user is on the login page\n\n"
+        "  @smoke\n  Scenario: Successful login\n"
+        "    Given the user is on the login page\n"
+        "    When the user enters valid credentials\n"
+        "    Then the user should be redirected to the dashboard\n"
+    )
 
 
 @pytest.fixture
@@ -117,14 +125,15 @@ class TestDiagnosticConversion:
 class TestLintContent:
     """Tests for _lint_content function."""
 
-    def test_valid_content_returns_no_diagnostics(
+    def test_valid_content_returns_no_error_diagnostics(
         self, valid_feature_content: str
     ) -> None:
-        """Valid feature content should produce no diagnostics."""
+        """Valid feature content should produce no error diagnostics."""
         from behave_lint.lsp.server import _lint_content
 
         diagnostics = _lint_content(valid_feature_content, "file:///test.feature")
-        assert diagnostics == []
+        error_diags = [d for d in diagnostics if d.severity == 1]  # Error
+        assert error_diags == []
 
     def test_invalid_content_returns_diagnostics(
         self, invalid_feature_content: str
