@@ -133,7 +133,7 @@ def create_server() -> LanguageServer:
     """
     server = LanguageServer(
         name="behave-lint",
-        version="2.0.0",
+        version="2.0.1",
         text_document_sync_kind=lsp.TextDocumentSyncKind.Full,
     )
 

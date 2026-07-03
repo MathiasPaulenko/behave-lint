@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.1] - 2025-07-03
+
+### Fixed
+
+- LSP server now registers built-in rules before linting (was producing 0 diagnostics).
+
 ## [2.0.0] - 2025-07-03
 
 ### Added
