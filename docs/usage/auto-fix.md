@@ -36,8 +36,12 @@ behave-lint features/ --fix --unsafe-fixes
 
 ### Unsafe fixes
 
-Currently no rules provide unsafe fixes. When implemented, they will
-require the `--unsafe-fixes` flag.
+| Rule | Fix |
+|------|-----|
+| **BS002** (keyword-ordering) | Reorder steps to Given → When → Then. |
+| **BS003** (step-phrasing) | Rewrite first-person steps to third-person. |
+| **BS004** (background-name) | Insert `Background: Common setup` as a placeholder name. |
+| **BS005** (feature-description) | Insert a template As a / I want / So that description. |
 
 ## Conflict resolution
 

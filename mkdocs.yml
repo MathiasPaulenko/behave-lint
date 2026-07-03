@@ -45,6 +45,8 @@ nav:
       - Profiles: usage/profiles.md
       - Output Formats: usage/output-formats.md
       - Auto-Fix: usage/auto-fix.md
+      - Rule Groups: usage/groups.md
+      - Incremental Cache: usage/cache.md
   - Rules:
       - Overview: rules/index.md
       - Correctness (BC): rules/correctness.md
