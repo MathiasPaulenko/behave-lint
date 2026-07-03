@@ -150,6 +150,11 @@ def build_config(merged: dict[str, object]) -> Config:
     ignore = merged.get("ignore", [])
     if not isinstance(ignore, list):
         ignore = []
+
+    profile = merged.get("profile", "none")
+    if not isinstance(profile, str):
+        profile = "none"
+
     paths = merged.get("paths", ["features/"])
     if not isinstance(paths, list):
         paths = ["features/"]
@@ -185,6 +190,7 @@ def build_config(merged: dict[str, object]) -> Config:
     return Config(
         select=list(select),
         ignore=list(ignore),
+        profile=profile,
         severity_overrides=severity_overrides,
         output=output,
         output_file=output_file if isinstance(output_file, str) else None,
@@ -235,19 +241,49 @@ def load_config(
     # 1. Built-in defaults
     merged = _default_config_dict()
 
-    # 2. pyproject.toml
+    # 2. Load pyproject.toml (if any)
     config_file = find_config_file(start_dir=start_dir, explicit_path=config_path)
+    toml_config: dict[str, object] = {}
     if config_file is not None:
         raw_toml = load_toml_config(config_file)
         check_unknown_keys(raw_toml)
-        normalized = normalize_keys(raw_toml)
-        merged = merge_configs(merged, normalized)
+        toml_config = normalize_keys(raw_toml)
 
-    # 3. Environment variables
+    # 3. Determine profile from highest-precedence source:
+    #    CLI overrides > env > pyproject.toml > defaults
+    profile_name = "none"
+    if overrides is not None:
+        profile_name = str(overrides.get("profile", "none"))
+    if profile_name == "none":
+        env_profile = env.get(f"{ENV_PREFIX}PROFILE") if env else None
+        if env_profile is None:
+            import os
+
+            env_profile = os.environ.get(f"{ENV_PREFIX}PROFILE")
+        if env_profile:
+            profile_name = env_profile
+    if profile_name == "none":
+        toml_profile = toml_config.get("profile", "none")
+        if isinstance(toml_profile, str):
+            profile_name = toml_profile
+
+    # 4. Apply profile (after defaults, before pyproject.toml values)
+    if profile_name != "none":
+        from behave_lint.configuration.profiles import get_profile_config
+
+        profile_config = get_profile_config(profile_name)
+        merged = merge_configs(merged, profile_config)
+        merged["profile"] = profile_name
+
+    # 5. pyproject.toml values (override profile)
+    if toml_config:
+        merged = merge_configs(merged, toml_config)
+
+    # 6. Environment variables
     env_overrides = load_from_env(env)
     merged = merge_configs(merged, env_overrides)
 
-    # 4. Explicit overrides (highest precedence)
+    # 7. Explicit overrides (highest precedence)
     if overrides is not None:
         normalized_overrides = normalize_keys(overrides)
         merged = merge_configs(merged, normalized_overrides)

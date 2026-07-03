@@ -42,6 +42,7 @@ nav:
   - Usage:
       - CLI Reference: usage/cli-reference.md
       - Configuration: usage/configuration.md
+      - Profiles: usage/profiles.md
       - Output Formats: usage/output-formats.md
       - Auto-Fix: usage/auto-fix.md
   - Rules:

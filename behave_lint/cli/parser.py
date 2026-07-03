@@ -26,6 +26,7 @@ class CLIArgs:
         paths: Files or directories to lint.
         select: Rule IDs to enable (comma-separated).
         ignore: Rule IDs to disable (comma-separated).
+        profile: Profile name (e.g. "recommended", "strict", "minimal").
         output: Output format(s).
         output_file: Output file path (None = stdout).
         config: Explicit path to pyproject.toml.
@@ -47,6 +48,7 @@ class CLIArgs:
     paths: list[str] = field(default_factory=list)
     select: list[str] = field(default_factory=list)
     ignore: list[str] = field(default_factory=list)
+    profile: str = "none"
     output: str = "console"
     output_file: str | None = None
     config: str | None = None
@@ -125,6 +127,13 @@ def lint(
         str | None,
         typer.Option("--ignore", help="Disable specific rules (comma-separated)."),
     ] = None,
+    profile: Annotated[
+        str | None,
+        typer.Option(
+            "--profile",
+            help="Use a built-in profile: recommended, strict, minimal.",
+        ),
+    ] = None,
     fail_on: Annotated[
         FailOn,
         typer.Option("--fail-on", help="Minimum severity for non-zero exit."),
@@ -193,6 +202,7 @@ def lint(
         paths=list(paths) if paths else [],
         select=_parse_rule_list(select) if select else [],
         ignore=_parse_rule_list(ignore) if ignore else [],
+        profile=profile if profile else "none",
         output=output.value,
         output_file=output_file,
         config=config,

@@ -18,6 +18,7 @@ behave-lint [OPTIONS] [PATHS]...
 |--------|-------------|
 | `--select RULES` | Enable specific rules (comma-separated). Overrides configuration. |
 | `--ignore RULES` | Disable specific rules (comma-separated). Overrides configuration. |
+| `--profile NAME` | Use a built-in profile: `recommended`, `strict`, `minimal`. |
 | `--fail-on LEVEL` | Exit with non-zero code if diagnostics at or above this severity are found. One of `error`, `warning`, `info`. Default: `warning`. |
 
 ## Output
@@ -78,6 +79,12 @@ behave-lint features/ --fix
 
 # Lint with only correctness rules
 behave-lint features/ --select BC001,BC002,BC003,BC004,BC005,BC006
+
+# Use the strict profile (all rules including pedantic)
+behave-lint features/ --profile strict
+
+# Use the minimal profile (only correctness + step definitions)
+behave-lint features/ --profile minimal
 
 # Explain a rule
 behave-lint --explain BD005

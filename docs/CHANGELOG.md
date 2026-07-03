@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2025-07-03
+
+### Added
+
+- **Profiles/Presets** — built-in rule profiles for common use cases:
+  - `recommended` — all rules except pedantic (34 rules).
+  - `strict` — all rules including pedantic (41 rules).
+  - `minimal` — only correctness and step-definition rules (15 rules).
+- New `--profile` CLI flag.
+- New `profile` config key in `pyproject.toml`.
+- New `BEHAVE_LINT_PROFILE` environment variable.
+- New [Profiles guide](usage/profiles.md) in documentation.
+
 ## [1.2.1] - 2025-07-03
 
 ### Fixed

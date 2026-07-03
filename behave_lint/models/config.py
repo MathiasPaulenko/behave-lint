@@ -21,6 +21,7 @@ class Config:
     Attributes:
         select: Rule IDs to enable (empty = all defaults).
         ignore: Rule IDs to disable.
+        profile: Profile name applied to this config (e.g. "recommended").
         severity_overrides: Per-rule severity overrides.
         output: Output format(s), comma-separated.
         output_file: Output file path (None = stdout).
@@ -37,6 +38,7 @@ class Config:
 
     select: list[str] = field(default_factory=list)
     ignore: list[str] = field(default_factory=list)
+    profile: str = "none"
     severity_overrides: dict[str, Severity] = field(default_factory=dict)
     output: str = "console"
     output_file: str | None = None

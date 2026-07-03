@@ -121,6 +121,8 @@ def _run_lint(args: CLIArgs, paths: list[str]) -> int:
         overrides["select"] = args.select
     if args.ignore:
         overrides["ignore"] = args.ignore
+    if args.profile and args.profile != "none":
+        overrides["profile"] = args.profile
     if args.output != "console":
         overrides["output"] = args.output
     if args.output_file is not None:

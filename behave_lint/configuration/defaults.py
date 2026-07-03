@@ -17,6 +17,7 @@ KNOWN_CONFIG_KEYS: frozenset[str] = frozenset(
     {
         "select",
         "ignore",
+        "profile",
         "severity",
         "output",
         "output_file",
@@ -70,6 +71,7 @@ ENV_VAR_MAP: dict[str, str] = {
     "NO_CACHE": "cache",
     "CACHE_DIR": "cache_dir",
     "FAIL_ON": "fail_on",
+    "PROFILE": "profile",
 }
 
 # Env vars that are boolean flags (value "1"/"true"/"yes" = True)
@@ -91,6 +93,7 @@ def _default_config_dict() -> dict[str, object]:
     return {
         "select": list(DEFAULT_SELECT),
         "ignore": list(DEFAULT_IGNORE),
+        "profile": "none",
         "severity_overrides": {},
         "output": DEFAULT_OUTPUT,
         "output_file": DEFAULT_OUTPUT_FILE,

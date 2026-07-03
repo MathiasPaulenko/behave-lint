@@ -10,9 +10,10 @@ Configuration is resolved in order of increasing precedence (higher
 overrides lower):
 
 1. **Built-in defaults** (lowest)
-2. **`pyproject.toml`** — `[tool.behave-lint]` section
-3. **Environment variables** — `BEHAVE_LINT_*` prefix
-4. **CLI flags** (highest)
+2. **Profile** (if specified via `--profile`, `profile` in config, or `BEHAVE_LINT_PROFILE`)
+3. **`pyproject.toml`** — `[tool.behave-lint]` section
+4. **Environment variables** — `BEHAVE_LINT_*` prefix
+5. **CLI flags** (highest)
 
 ### Merge rules
 
@@ -30,6 +31,7 @@ directory and walking up to the filesystem root. The first
 
 ```toml
 [tool.behave-lint]
+profile = "recommended"
 select = ["BC001", "BC004", "BS001"]
 ignore = ["BP001", "BP002"]
 fail-on = "warning"
@@ -52,6 +54,7 @@ behave-lint --config /path/to/pyproject.toml features/
 |--------|------|---------|-------------|
 | `select` | list[str] | `[]` (all) | Rule IDs to enable. Empty means all defaults. |
 | `ignore` | list[str] | `[]` | Rule IDs to disable. |
+| `profile` | str | `"none"` | Built-in profile: `recommended`, `strict`, `minimal`. See [Profiles](profiles.md). |
 | `exclude` | list[str] | `[]` | Paths to exclude from linting. |
 
 ### Severity
