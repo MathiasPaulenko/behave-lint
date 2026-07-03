@@ -229,3 +229,112 @@ class TestAutoFixMetadata:
             FeatureDescriptionFormattingRule.metadata.auto_fix
             is AutoFixCapability.UNSAFE
         )
+
+    def test_bs001_is_safe(self) -> None:
+        from behave_lint.rules.builtin.style import TagCasingRule
+
+        assert TagCasingRule.metadata.auto_fix is AutoFixCapability.SAFE
+
+    def test_bs004_is_unsafe(self) -> None:
+        from behave_lint.rules.builtin.style import BackgroundNameRule
+
+        assert BackgroundNameRule.metadata.auto_fix is AutoFixCapability.UNSAFE
+
+    def test_bs006_is_safe(self) -> None:
+        from behave_lint.rules.builtin.style import StepKeywordCasingRule
+
+        assert StepKeywordCasingRule.metadata.auto_fix is AutoFixCapability.SAFE
+
+    def test_bs007_is_safe(self) -> None:
+        from behave_lint.rules.builtin.style import TrailingWhitespaceRule
+
+        assert TrailingWhitespaceRule.metadata.auto_fix is AutoFixCapability.SAFE
+
+    def test_bs008_is_safe(self) -> None:
+        from behave_lint.rules.builtin.style import TabIndentationRule
+
+        assert TabIndentationRule.metadata.auto_fix is AutoFixCapability.SAFE
+
+    def test_bc004_is_safe(self) -> None:
+        from behave_lint.rules.builtin.correctness import InvalidTagSyntaxRule
+
+        assert InvalidTagSyntaxRule.metadata.auto_fix is AutoFixCapability.SAFE
+
+    def test_bd004_is_safe(self) -> None:
+        from behave_lint.rules.builtin.step_definitions import (
+            StepParameterConventionRule,
+        )
+
+        assert StepParameterConventionRule.metadata.auto_fix is AutoFixCapability.SAFE
+
+    def test_bd005_is_safe(self) -> None:
+        from behave_lint.rules.builtin.step_definitions import (
+            StepTrailingPunctuationRule,
+        )
+
+        assert StepTrailingPunctuationRule.metadata.auto_fix is AutoFixCapability.SAFE
+
+
+# ---------------------------------------------------------------------------
+# BS004 fix tests
+# ---------------------------------------------------------------------------
+
+
+class TestBS004BackgroundNameFix:
+    """Tests for BS004 auto-fix (background name)."""
+
+    @pytest.fixture
+    def background_no_name_file(self, tmp_path: Path) -> Path:
+        f = tmp_path / "background.feature"
+        f.write_text(
+            "Feature: Test\n\n"
+            "  Background:\n"
+            "    Given a logged-in user\n\n"
+            "  Scenario: A scenario\n"
+            "    When I do something\n",
+            encoding="utf-8",
+        )
+        return f
+
+    def test_fix_adds_name_with_unsafe_fixes(
+        self, background_no_name_file: Path
+    ) -> None:
+        exit_code = main(
+            [
+                "--select",
+                "BS004",
+                "--fix",
+                "--unsafe-fixes",
+                str(background_no_name_file),
+            ]
+        )
+        # Exit code 1 = warnings found (diagnostics computed before fix)
+        assert exit_code == 1
+        content = background_no_name_file.read_text(encoding="utf-8")
+        assert "Background: Common setup" in content
+
+    def test_fix_skipped_without_unsafe_fixes(
+        self, background_no_name_file: Path
+    ) -> None:
+        main(
+            [
+                "--select",
+                "BS004",
+                "--fix",
+                str(background_no_name_file),
+            ]
+        )
+        content = background_no_name_file.read_text(encoding="utf-8")
+        assert "Background:" in content
+        assert "Common setup" not in content
+
+    def test_no_fix_without_flag(self, background_no_name_file: Path) -> None:
+        main(
+            [
+                "--select",
+                "BS004",
+                str(background_no_name_file),
+            ]
+        )
+        content = background_no_name_file.read_text(encoding="utf-8")
+        assert "Background:\n" in content

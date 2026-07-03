@@ -7,7 +7,7 @@ from typing import Any
 from behave_lint.models.config import Config
 from behave_lint.models.diagnostic import Diagnostic
 from behave_lint.models.enums import Category, Severity
-from behave_lint.models.rule_metadata import RuleMetadata, RuleExample
+from behave_lint.models.rule_metadata import RuleExample, RuleMetadata
 from behave_lint.rules.base import Rule
 
 
@@ -61,8 +61,7 @@ class NoGivenAfterThenRule(Rule):
                     diagnostics.append(
                         self.diagnostic(
                             message=(
-                                f"Given step '{step.name}' appears "
-                                "after a Then step"
+                                f"Given step '{step.name}' appears after a Then step"
                             ),
                             node=step,
                             suggestion="Move Given steps before Then.",

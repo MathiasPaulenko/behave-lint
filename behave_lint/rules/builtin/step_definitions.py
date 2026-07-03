@@ -271,6 +271,7 @@ class StepParameterConventionRule(Rule):
             ),
         ],
         tags=["steps", "parameters", "conventions"],
+        auto_fix=AutoFixCapability.SAFE,
     )
 
     def check(self, feature: Any, config: Config) -> list[Diagnostic]:
@@ -420,6 +421,7 @@ class StepTrailingPunctuationRule(Rule):
             ),
         ],
         tags=["steps", "punctuation", "definitions"],
+        auto_fix=AutoFixCapability.SAFE,
     )
 
     _TRAILING_PUNCTUATION = frozenset({".", ",", ";", "!", ":"})

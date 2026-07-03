@@ -270,6 +270,7 @@ class InvalidTagSyntaxRule(Rule):
             ),
         ],
         tags=["tags", "syntax"],
+        auto_fix=AutoFixCapability.SAFE,
     )
 
     def check(self, feature: Any, config: Config) -> list[Diagnostic]:

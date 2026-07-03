@@ -66,6 +66,7 @@ class TagCasingRule(Rule):
             ),
         ],
         tags=["tags", "naming", "convention"],
+        auto_fix=AutoFixCapability.SAFE,
     )
 
     def _normalize_tag(self, tag_name: str) -> str:
@@ -569,6 +570,7 @@ class BackgroundNameRule(Rule):
             ),
         ],
         tags=["background", "naming", "readability"],
+        auto_fix=AutoFixCapability.UNSAFE,
     )
 
     def check(self, feature: Any, config: Config) -> list[Diagnostic]:
@@ -589,6 +591,63 @@ class BackgroundNameRule(Rule):
                 )
             ]
         return []
+
+    def get_fixes(
+        self, feature: Any, config: Config, diagnostics: list[Diagnostic]
+    ) -> list[FixEdit]:
+        from pathlib import Path
+
+        fixes: list[FixEdit] = []
+        file_path = getattr(feature, "file_path", None)
+        if not file_path:
+            location = getattr(feature, "location", None)
+            if location is not None:
+                file_path = getattr(location, "filename", None)
+        if not file_path:
+            return fixes
+
+        try:
+            content = Path(file_path).read_text(encoding="utf-8")
+            lines = content.splitlines(keepends=True)
+        except OSError:
+            return fixes
+
+        background = getattr(feature, "background", None)
+        if background is None:
+            return fixes
+
+        bg_line = getattr(background, "line", None)
+        if bg_line is None:
+            loc = getattr(background, "location", None)
+            if loc is not None:
+                bg_line = getattr(loc, "line", None)
+        if bg_line is None:
+            return fixes
+
+        idx = bg_line - 1
+        if idx < 0 or idx >= len(lines):
+            return fixes
+
+        old_line = lines[idx]
+        if "Background:" not in old_line:
+            return fixes
+
+        new_line = old_line.replace("Background:", "Background: Common setup")
+
+        fixes.append(
+            FixEdit(
+                file_path=file_path,
+                start_line=bg_line,
+                end_line=bg_line,
+                old_text=old_line,
+                new_text=new_line,
+                safety=AutoFixCapability.UNSAFE,
+                rule_id="BS004",
+                diagnostic_line=bg_line,
+            )
+        )
+
+        return fixes
 
 
 class FeatureDescriptionFormattingRule(Rule):
@@ -758,6 +817,7 @@ class StepKeywordCasingRule(Rule):
             ),
         ],
         tags=["steps", "keywords", "casing"],
+        auto_fix=AutoFixCapability.SAFE,
     )
 
     _KEYWORD_MAP: ClassVar[dict[str, str]] = {
@@ -891,6 +951,7 @@ class TrailingWhitespaceRule(Rule):
             ),
         ],
         tags=["whitespace", "formatting"],
+        auto_fix=AutoFixCapability.SAFE,
     )
 
     def check(self, feature: Any, config: Config) -> list[Diagnostic]:
@@ -1002,6 +1063,7 @@ class TabIndentationRule(Rule):
             ),
         ],
         tags=["indentation", "tabs", "formatting"],
+        auto_fix=AutoFixCapability.SAFE,
     )
 
     _TAB_RE = re.compile(r"^\t+")

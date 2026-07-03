@@ -24,7 +24,7 @@ from behave_lint.models import (
     Severity,
 )
 
-__version__ = "1.5.0"
+__version__ = "1.5.1"
 
 __all__ = [
     "AutoFixCapability",

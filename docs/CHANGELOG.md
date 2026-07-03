@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.1] - 2025-07-03
+
+### Added
+
+- Auto-fix metadata declared for BS001 (tag casing), BS006 (step keyword
+  casing), BS007 (trailing whitespace), BS008 (tab indentation),
+  BC004 (invalid tag syntax), BD004 (step parameter convention),
+  BD005 (step trailing punctuation) — all SAFE.
+- Auto-fix support for BS004 (background name) — UNSAFE, inserts
+  `Background: Common setup` as a placeholder name.
+- Tests for all newly declared auto-fix metadata and BS004 fix.
+
+### Fixed
+
+- Documentation workflow: duplicate `github-pages` artifact caused by
+  both `build` and `deploy` jobs uploading. Now only `build` uploads.
+- Added `workflow_dispatch` trigger to docs workflow for manual runs.
+
 ## [1.5.0] - 2025-07-03
 
 ### Added
