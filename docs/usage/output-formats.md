@@ -67,7 +67,7 @@ behave-lint features/ --output json --output-file report.json
     "error_count": 1,
     "warning_count": 1,
     "info_count": 1,
-    "rules_executed": 31,
+    "rules_executed": 41,
     "duration_ms": 42.5,
     "cache_hits": 3,
     "cache_misses": 2

@@ -1,17 +1,17 @@
 # Rules Reference
 
-`behave-lint` ships with **31 built-in rules** across 6 categories.
+`behave-lint` ships with **41 built-in rules** across 6 categories.
 
 ## Categories
 
 | Prefix | Category | Default Severity | Rules |
 |--------|----------|-----------------|-------|
-| BC | [Correctness](correctness.md) | ERROR | 6 |
+| BC | [Correctness](correctness.md) | ERROR | 10 |
 | BD | [Step Definitions](step-definitions.md) | WARNING | 5 |
 | BK | [Consistency](consistency.md) | WARNING/INFO | 5 |
-| BX | [Complexity](complexity.md) | WARNING | 5 |
-| BS | [Style](style.md) | WARNING | 5 |
-| BP | [Pedantic](pedantic.md) | INFO | 5 |
+| BX | [Complexity](complexity.md) | WARNING | 6 |
+| BS | [Style](style.md) | WARNING | 8 |
+| BP | [Pedantic](pedantic.md) | INFO | 7 |
 
 ## Auto-fixable rules
 
@@ -21,6 +21,9 @@
 | BD004 | Convert `{param}` → `<param>` | Safe |
 | BD005 | Remove trailing punctuation | Safe |
 | BS001 | Convert tags to `snake_case` | Safe |
+| BS006 | Capitalize step keywords | Safe |
+| BS007 | Remove trailing whitespace | Safe |
+| BS008 | Convert tabs to spaces | Safe |
 
 See the [Auto-Fix guide](../usage/auto-fix.md) for details.
 

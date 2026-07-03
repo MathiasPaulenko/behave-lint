@@ -9,7 +9,7 @@ See RULE_TAXONOMY.md Section 3 and IMPLEMENTATION_ROADMAP.md E7.2.
 from __future__ import annotations
 
 import re
-from typing import Any
+from typing import Any, ClassVar
 
 from behave_lint.autofix.models import FixEdit
 from behave_lint.models.config import Config
@@ -463,10 +463,398 @@ class FeatureDescriptionFormattingRule(Rule):
         return []
 
 
+class StepKeywordCasingRule(Rule):
+    """BS006: Enforce capitalized Gherkin step keywords.
+
+    Step keywords (Given, When, Then, And, But) should be capitalized.
+    Lowercase keywords like 'given' or 'when' are non-standard.
+    """
+
+    metadata = RuleMetadata(
+        rule_id="BS006",
+        name="step-keyword-casing",
+        title="Step keywords should be capitalized",
+        description=(
+            "Detects step keywords that are not properly capitalized. "
+            "Gherkin keywords (Given, When, Then, And, But) should "
+            "start with an uppercase letter."
+        ),
+        category=Category.STYLE,
+        default_severity=Severity.WARNING,
+        motivation=(
+            "Capitalized keywords improve readability and conform to "
+            "the standard Gherkin syntax used by most editors and tools."
+        ),
+        since="1.2.0",
+        examples=[
+            RuleExample(
+                before=(
+                    "  Scenario: Test\n"
+                    "    given a step\n"
+                    "    when I do something\n"
+                    "    then I see a result\n"
+                ),
+                after=(
+                    "  Scenario: Test\n"
+                    "    Given a step\n"
+                    "    When I do something\n"
+                    "    Then I see a result\n"
+                ),
+                description="Capitalize the first letter of step keywords.",
+            ),
+        ],
+        tags=["steps", "keywords", "casing"],
+    )
+
+    _KEYWORD_MAP: ClassVar[dict[str, str]] = {
+        "given": "Given",
+        "when": "When",
+        "then": "Then",
+        "and": "And",
+        "but": "But",
+    }
+
+    def check(self, feature: Any, config: Config) -> list[Diagnostic]:
+        diagnostics: list[Diagnostic] = []
+
+        file_path = getattr(feature, "file_path", None)
+        if not file_path:
+            location = getattr(feature, "location", None)
+            if location is not None:
+                file_path = getattr(location, "filename", None)
+        if not file_path:
+            return diagnostics
+
+        from pathlib import Path
+
+        try:
+            content = Path(file_path).read_text(encoding="utf-8")
+        except OSError:
+            return diagnostics
+
+        for i, line in enumerate(content.splitlines(keepends=True), 1):
+            stripped = line.lstrip()
+            for lower, correct in self._KEYWORD_MAP.items():
+                prefix = lower + " "
+                if stripped.lower().startswith(prefix):
+                    actual = stripped[: len(lower)]
+                    if actual != correct:
+                        diagnostics.append(
+                            self.diagnostic(
+                                message=(
+                                    f"Step keyword '{actual}' should be "
+                                    f"'{correct}'"
+                                ),
+                                node=feature,
+                                file_path=file_path,
+                                line=i,
+                                suggestion=(
+                                    "Capitalize the first letter of "
+                                    "the step keyword."
+                                ),
+                            )
+                        )
+                    break
+
+        return diagnostics
+
+    def get_fixes(
+        self, feature: Any, config: Config, diagnostics: list[Diagnostic]
+    ) -> list[FixEdit]:
+        from pathlib import Path
+
+        fixes: list[FixEdit] = []
+        file_path = getattr(feature, "file_path", None)
+        if not file_path:
+            location = getattr(feature, "location", None)
+            if location is not None:
+                file_path = getattr(location, "filename", None)
+        if not file_path:
+            return fixes
+
+        try:
+            content = Path(file_path).read_text(encoding="utf-8")
+            lines = content.splitlines(keepends=True)
+        except OSError:
+            return fixes
+
+        diag_lines = {d.line for d in diagnostics if d.rule_id == "BS006"}
+
+        for i, line in enumerate(lines, 1):
+            if i not in diag_lines:
+                continue
+            stripped = line.lstrip()
+            for lower, correct in self._KEYWORD_MAP.items():
+                prefix = lower + " "
+                if stripped.lower().startswith(prefix):
+                    actual = stripped[: len(lower)]
+                    if actual != correct:
+                        new_line = line.replace(actual, correct, 1)
+                        if new_line != line:
+                            fixes.append(
+                                FixEdit(
+                                    file_path=file_path,
+                                    start_line=i,
+                                    end_line=i,
+                                    old_text=line,
+                                    new_text=new_line,
+                                    safety=AutoFixCapability.SAFE,
+                                    rule_id="BS006",
+                                    diagnostic_line=i,
+                                )
+                            )
+                    break
+
+        return fixes
+
+
+class TrailingWhitespaceRule(Rule):
+    """BS007: Detect trailing whitespace in feature files.
+
+    Lines with trailing whitespace are unnecessary and can cause
+    diff noise in version control.
+    """
+
+    metadata = RuleMetadata(
+        rule_id="BS007",
+        name="trailing-whitespace",
+        title="Line has trailing whitespace",
+        description=(
+            "Detects lines in feature files that have trailing "
+            "whitespace (spaces or tabs at the end of the line). "
+            "Trailing whitespace causes unnecessary diff noise."
+        ),
+        category=Category.STYLE,
+        default_severity=Severity.WARNING,
+        motivation=(
+            "Trailing whitespace is invisible noise that accumulates "
+            "in version control diffs and can confuse some Gherkin parsers."
+        ),
+        since="1.2.0",
+        examples=[
+            RuleExample(
+                before=("Feature: Test   \n  Scenario: A  \n    Given a step\n"),
+                after=("Feature: Test\n  Scenario: A\n    Given a step\n"),
+                description="Remove trailing whitespace from each line.",
+            ),
+        ],
+        tags=["whitespace", "formatting"],
+    )
+
+    def check(self, feature: Any, config: Config) -> list[Diagnostic]:
+        diagnostics: list[Diagnostic] = []
+
+        file_path = getattr(feature, "file_path", None)
+        if not file_path:
+            location = getattr(feature, "location", None)
+            if location is not None:
+                file_path = getattr(location, "filename", None)
+        if not file_path:
+            return diagnostics
+
+        from pathlib import Path
+
+        try:
+            content = Path(file_path).read_text(encoding="utf-8")
+        except OSError:
+            return diagnostics
+
+        for i, line in enumerate(content.splitlines(keepends=True), 1):
+            stripped = line.rstrip("\r\n")
+            if stripped != stripped.rstrip():
+                diagnostics.append(
+                    self.diagnostic(
+                        message=(
+                            f"Line {i} has trailing whitespace"
+                        ),
+                        node=feature,
+                        file_path=file_path,
+                        line=i,
+                        suggestion="Remove trailing whitespace from this line.",
+                    )
+                )
+
+        return diagnostics
+
+    def get_fixes(
+        self, feature: Any, config: Config, diagnostics: list[Diagnostic]
+    ) -> list[FixEdit]:
+        from pathlib import Path
+
+        fixes: list[FixEdit] = []
+        file_path = getattr(feature, "file_path", None)
+        if not file_path:
+            location = getattr(feature, "location", None)
+            if location is not None:
+                file_path = getattr(location, "filename", None)
+        if not file_path:
+            return fixes
+
+        try:
+            content = Path(file_path).read_text(encoding="utf-8")
+            lines = content.splitlines(keepends=True)
+        except OSError:
+            return fixes
+
+        diag_lines = {d.line for d in diagnostics if d.rule_id == "BS007"}
+
+        for i, line in enumerate(lines, 1):
+            if i not in diag_lines:
+                continue
+            stripped = line.rstrip("\r\n")
+            trailing = line[len(stripped):]
+            new_line = stripped.rstrip() + trailing
+            if new_line != line:
+                fixes.append(
+                    FixEdit(
+                        file_path=file_path,
+                        start_line=i,
+                        end_line=i,
+                        old_text=line,
+                        new_text=new_line,
+                        safety=AutoFixCapability.SAFE,
+                        rule_id="BS007",
+                        diagnostic_line=i,
+                    )
+                )
+
+        return fixes
+
+
+class TabIndentationRule(Rule):
+    """BS008: Detect tab characters used for indentation.
+
+    Gherkin feature files should use spaces for indentation, not tabs.
+    Tabs can render differently across editors and cause parsing issues.
+    """
+
+    metadata = RuleMetadata(
+        rule_id="BS008",
+        name="tab-indentation",
+        title="Indentation uses tabs instead of spaces",
+        description=(
+            "Detects lines that use tab characters for indentation. "
+            "Spaces are the standard indentation for Gherkin feature files."
+        ),
+        category=Category.STYLE,
+        default_severity=Severity.WARNING,
+        motivation=(
+            "Tabs render differently across editors and can cause "
+            "alignment issues in data tables. Spaces ensure consistent "
+            "formatting."
+        ),
+        since="1.2.0",
+        examples=[
+            RuleExample(
+                before=(
+                    "Feature: Test\n"
+                    "\tScenario: A\n"
+                    "\t\tGiven a step\n"
+                ),
+                after=(
+                    "Feature: Test\n"
+                    "  Scenario: A\n"
+                    "    Given a step\n"
+                ),
+                description="Replace tabs with spaces (2 per level).",
+            ),
+        ],
+        tags=["indentation", "tabs", "formatting"],
+    )
+
+    _TAB_RE = re.compile(r"^\t+")
+
+    def check(self, feature: Any, config: Config) -> list[Diagnostic]:
+        diagnostics: list[Diagnostic] = []
+
+        file_path = getattr(feature, "file_path", None)
+        if not file_path:
+            location = getattr(feature, "location", None)
+            if location is not None:
+                file_path = getattr(location, "filename", None)
+        if not file_path:
+            return diagnostics
+
+        from pathlib import Path
+
+        try:
+            content = Path(file_path).read_text(encoding="utf-8")
+        except OSError:
+            return diagnostics
+
+        for i, line in enumerate(content.splitlines(keepends=True), 1):
+            if self._TAB_RE.match(line):
+                diagnostics.append(
+                    self.diagnostic(
+                        message=(
+                            f"Line {i} uses tabs for indentation"
+                        ),
+                        node=feature,
+                        file_path=file_path,
+                        line=i,
+                        suggestion=(
+                            "Replace tabs with spaces (2 spaces per "
+                            "indentation level)."
+                        ),
+                    )
+                )
+
+        return diagnostics
+
+    def get_fixes(
+        self, feature: Any, config: Config, diagnostics: list[Diagnostic]
+    ) -> list[FixEdit]:
+        from pathlib import Path
+
+        fixes: list[FixEdit] = []
+        file_path = getattr(feature, "file_path", None)
+        if not file_path:
+            location = getattr(feature, "location", None)
+            if location is not None:
+                file_path = getattr(location, "filename", None)
+        if not file_path:
+            return fixes
+
+        try:
+            content = Path(file_path).read_text(encoding="utf-8")
+            lines = content.splitlines(keepends=True)
+        except OSError:
+            return fixes
+
+        diag_lines = {d.line for d in diagnostics if d.rule_id == "BS008"}
+
+        for i, line in enumerate(lines, 1):
+            if i not in diag_lines:
+                continue
+            match = self._TAB_RE.match(line)
+            if not match:
+                continue
+            tabs = match.group()
+            spaces = "  " * len(tabs)
+            new_line = spaces + line[len(tabs):]
+            fixes.append(
+                FixEdit(
+                    file_path=file_path,
+                    start_line=i,
+                    end_line=i,
+                    old_text=line,
+                    new_text=new_line,
+                    safety=AutoFixCapability.SAFE,
+                    rule_id="BS008",
+                    diagnostic_line=i,
+                )
+            )
+
+        return fixes
+
+
 __all__ = [
     "BackgroundNameRule",
     "FeatureDescriptionFormattingRule",
     "KeywordOrderingRule",
+    "StepKeywordCasingRule",
     "StepPhrasingRule",
+    "TabIndentationRule",
     "TagCasingRule",
+    "TrailingWhitespaceRule",
 ]

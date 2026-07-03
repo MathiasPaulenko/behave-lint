@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2025-07-03
+
+### Added
+
+- **10 new built-in rules** (31 → 41 total):
+  - BC007: `empty-scenario` — detects scenarios with no steps.
+  - BC008: `unused-outline-placeholder` — detects unused Examples columns.
+  - BC009: `undefined-outline-placeholder` — detects undefined `<param>` placeholders.
+  - BC010: `duplicate-examples-name` — detects duplicate Examples names.
+  - BS006: `step-keyword-casing` — enforces capitalized step keywords (auto-fixable).
+  - BS007: `trailing-whitespace` — detects trailing whitespace (auto-fixable).
+  - BS008: `tab-indentation` — detects tab indentation (auto-fixable).
+  - BX006: `feature-file-too-long` — detects overly long feature files.
+  - BP006: `missing-feature-description` — detects features without a description.
+  - BP007: `scenario-without-assertion` — detects scenarios without a `Then` step.
+
 ## [1.1.0] - 2025-07-02
 
 ### Changed

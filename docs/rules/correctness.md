@@ -1,4 +1,4 @@
-# Correctness Rules (BC001–BC006)
+# Correctness Rules (BC001–BC010)
 
 Rules that detect definitively wrong structures causing runtime errors
 or test failures.
@@ -229,3 +229,73 @@ column counts between headers and data rows.
           | alice    | pass123  |
           | bob      | secret   |
     ```
+
+---
+
+## BC007: empty-scenario
+
+Detects scenarios that contain no steps. An empty scenario provides no
+test coverage and may indicate an incomplete or placeholder scenario.
+
+**Tags:** `scenarios`, `completeness`
+
+**Since:** 1.2.0
+
+### Example
+
+??? example "Before → After"
+
+    **Before:**
+
+    ```gherkin
+    Feature: Test
+
+      Scenario: Empty scenario
+
+      Scenario: Real scenario
+        Given a step
+    ```
+
+    **After:**
+
+    ```gherkin
+    Feature: Test
+
+      Scenario: Real scenario
+        Given a step
+    ```
+
+---
+
+## BC008: unused-outline-placeholder
+
+Detects columns in Examples tables that are never referenced via
+`<param>` placeholders in the scenario outline steps. Unused columns
+add noise to the data.
+
+**Tags:** `scenario-outline`, `examples`, `placeholders`
+
+**Since:** 1.2.0
+
+---
+
+## BC009: undefined-outline-placeholder
+
+Detects `<param>` placeholders in scenario outline steps that are not
+defined in any Examples table header. Undefined placeholders cause
+runtime errors in behave.
+
+**Tags:** `scenario-outline`, `examples`, `placeholders`
+
+**Since:** 1.2.0
+
+---
+
+## BC010: duplicate-examples-name
+
+Detects Examples blocks that share the same name within a single
+scenario outline. Duplicate names cause confusion in test reports.
+
+**Tags:** `examples`, `naming`, `scenario-outline`
+
+**Since:** 1.2.0

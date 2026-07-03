@@ -1,4 +1,4 @@
-# Pedantic Rules (BP001–BP005)
+# Pedantic Rules (BP001–BP007)
 
 Strict best-practice rules for teams that want thorough enforcement.
 
@@ -189,3 +189,26 @@ improve readability by grouping related data.
           | alice    |
           | bob      |
     ```
+
+---
+
+## BP006: missing-feature-description
+
+Detects features that lack a description block. A description explains
+the feature's purpose and improves readability for non-technical
+stakeholders.
+
+**Tags:** `feature`, `description`, `pedantic`
+
+**Since:** 1.2.0
+
+---
+
+## BP007: scenario-without-assertion
+
+Detects scenarios that do not contain at least one `Then` step. Without
+an assertion, the scenario does not verify any expected outcome.
+
+**Tags:** `scenarios`, `assertion`, `pedantic`
+
+**Since:** 1.2.0

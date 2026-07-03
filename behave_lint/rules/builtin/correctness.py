@@ -598,11 +598,341 @@ class InvalidExampleTableStructureRule(Rule):
         return diagnostics
 
 
+class EmptyScenarioRule(Rule):
+    """BC007: Detect scenarios with no steps.
+
+    A scenario without steps contributes nothing to the test suite
+    and may indicate an incomplete or placeholder scenario.
+    """
+
+    metadata = RuleMetadata(
+        rule_id="BC007",
+        name="empty-scenario",
+        title="Scenario has no steps",
+        description=(
+            "Detects scenarios that contain no steps. An empty scenario "
+            "provides no test coverage and may indicate an incomplete "
+            "or placeholder scenario."
+        ),
+        category=Category.CORRECTNESS,
+        default_severity=Severity.ERROR,
+        motivation=(
+            "Empty scenarios add noise to the test suite without "
+            "providing any test coverage. They may confuse CI systems "
+            "and make test reports misleading."
+        ),
+        since="1.2.0",
+        examples=[
+            RuleExample(
+                before=(
+                    "Feature: Test\n\n"
+                    "  Scenario: Empty scenario\n\n"
+                    "  Scenario: Real scenario\n"
+                    "    Given a step\n"
+                ),
+                after=(
+                    "Feature: Test\n\n"
+                    "  Scenario: Real scenario\n"
+                    "    Given a step\n"
+                ),
+                description="Remove the empty scenario or add steps to it.",
+            ),
+        ],
+        tags=["scenarios", "completeness"],
+    )
+
+    def check(self, feature: Any, config: Config) -> list[Diagnostic]:
+        diagnostics: list[Diagnostic] = []
+
+        for scenario in feature.all_scenarios():
+            steps = getattr(scenario, "steps", [])
+            if not steps:
+                diagnostics.append(
+                    self.diagnostic(
+                        message=(
+                            f"Scenario '{scenario.name}' has no steps"
+                        ),
+                        node=scenario,
+                        suggestion=(
+                            "Add steps to this scenario or remove it "
+                            "if it is no longer needed."
+                        ),
+                    )
+                )
+
+        return diagnostics
+
+
+class UnusedOutlinePlaceholderRule(Rule):
+    """BC008: Detect unused outline placeholders in Examples headers.
+
+    A column in the Examples header that is never referenced via
+    <param> in the scenario steps is unused and should be removed.
+    """
+
+    metadata = RuleMetadata(
+        rule_id="BC008",
+        name="unused-outline-placeholder",
+        title="Examples column is never referenced in steps",
+        description=(
+            "Detects columns in Examples tables that are never "
+            "referenced via <param> placeholders in the scenario "
+            "outline steps. Unused columns add noise to the data."
+        ),
+        category=Category.CORRECTNESS,
+        default_severity=Severity.WARNING,
+        motivation=(
+            "Unused columns in Examples tables are confusing and "
+            "may indicate a missing step or leftover data from "
+            "a removed step."
+        ),
+        since="1.2.0",
+        examples=[
+            RuleExample(
+                before=(
+                    "  Scenario Outline: Test <value>\n"
+                    "    Given a <value>\n\n"
+                    "    Examples:\n"
+                    "      | value | unused |\n"
+                    "      | a     | b      |\n"
+                ),
+                after=(
+                    "  Scenario Outline: Test <value>\n"
+                    "    Given a <value>\n\n"
+                    "    Examples:\n"
+                    "      | value |\n"
+                    "      | a     |\n"
+                ),
+                description="Remove the unused column from the Examples table.",
+            ),
+        ],
+        tags=["scenario-outline", "examples", "placeholders"],
+    )
+
+    def check(self, feature: Any, config: Config) -> list[Diagnostic]:
+        diagnostics: list[Diagnostic] = []
+
+        for scenario in feature.all_scenarios():
+            examples = getattr(scenario, "examples", None)
+            if not examples:
+                continue
+
+            steps = getattr(scenario, "steps", [])
+            step_text = " ".join(
+                getattr(s, "name", "") for s in steps
+            )
+
+            for example in examples:
+                table = getattr(example, "table", None)
+                if table is None:
+                    continue
+                headers = getattr(table, "headers", [])
+                for header in headers:
+                    if not header or not header.strip():
+                        continue
+                    placeholder = f"<{header.strip()}>"
+                    if placeholder not in step_text:
+                        diagnostics.append(
+                            self.diagnostic(
+                                message=(
+                                    f"Examples column '{header}' is "
+                                    "never referenced in scenario steps"
+                                ),
+                                node=table,
+                                suggestion=(
+                                    "Remove this column from the Examples "
+                                    "table or reference it in a step."
+                                ),
+                            )
+                        )
+
+        return diagnostics
+
+
+class UndefinedOutlinePlaceholderRule(Rule):
+    """BC009: Detect undefined outline placeholders in steps.
+
+    A <param> placeholder used in steps but absent from the Examples
+    header will cause a runtime error in behave.
+    """
+
+    metadata = RuleMetadata(
+        rule_id="BC009",
+        name="undefined-outline-placeholder",
+        title="Step uses placeholder not in Examples header",
+        description=(
+            "Detects <param> placeholders in scenario outline steps "
+            "that are not defined in any Examples table header. "
+            "Undefined placeholders cause runtime errors in behave."
+        ),
+        category=Category.CORRECTNESS,
+        default_severity=Severity.ERROR,
+        motivation=(
+            "A placeholder that is not in the Examples header cannot "
+            "be substituted at runtime, causing behave to fail."
+        ),
+        since="1.2.0",
+        examples=[
+            RuleExample(
+                before=(
+                    "  Scenario Outline: Test <value>\n"
+                    "    Given a <value> with <count>\n\n"
+                    "    Examples:\n"
+                    "      | value |\n"
+                    "      | a     |\n"
+                ),
+                after=(
+                    "  Scenario Outline: Test <value>\n"
+                    "    Given a <value> with <count>\n\n"
+                    "    Examples:\n"
+                    "      | value | count |\n"
+                    "      | a     | 1     |\n"
+                ),
+                description="Add the missing column to the Examples table.",
+            ),
+        ],
+        tags=["scenario-outline", "examples", "placeholders"],
+    )
+
+    _PLACEHOLDER_RE = re.compile(r"<([^>]+)>")
+
+    def check(self, feature: Any, config: Config) -> list[Diagnostic]:
+        diagnostics: list[Diagnostic] = []
+
+        for scenario in feature.all_scenarios():
+            examples = getattr(scenario, "examples", None)
+            if not examples:
+                continue
+
+            all_headers: set[str] = set()
+            for example in examples:
+                table = getattr(example, "table", None)
+                if table is None:
+                    continue
+                for header in getattr(table, "headers", []):
+                    if header and header.strip():
+                        all_headers.add(header.strip())
+
+            steps = getattr(scenario, "steps", [])
+            for step in steps:
+                text = getattr(step, "name", "")
+                for match in self._PLACEHOLDER_RE.finditer(text):
+                    placeholder_name = match.group(1).strip()
+                    if placeholder_name not in all_headers:
+                        diagnostics.append(
+                            self.diagnostic(
+                                message=(
+                                    f"Step '{step.name}' uses placeholder "
+                                    f"<{placeholder_name}> which is not "
+                                    "defined in any Examples header"
+                                ),
+                                node=step,
+                                suggestion=(
+                                    f"Add a '{placeholder_name}' column "
+                                    "to the Examples table or remove "
+                                    "the placeholder from the step."
+                                ),
+                            )
+                        )
+
+        return diagnostics
+
+
+class DuplicateExamplesNameRule(Rule):
+    """BC010: Detect duplicate Examples names within a scenario outline.
+
+    Two Examples blocks with the same name in the same scenario outline
+    cause confusion in test reports and may indicate a copy-paste error.
+    """
+
+    metadata = RuleMetadata(
+        rule_id="BC010",
+        name="duplicate-examples-name",
+        title="Duplicate Examples names within a scenario outline",
+        description=(
+            "Detects Examples blocks that share the same name within "
+            "a single scenario outline. Duplicate names cause confusion "
+            "in test reports."
+        ),
+        category=Category.CORRECTNESS,
+        default_severity=Severity.WARNING,
+        motivation=(
+            "Duplicate Examples names make it difficult to identify "
+            "which data set caused a failure in test reports."
+        ),
+        since="1.2.0",
+        examples=[
+            RuleExample(
+                before=(
+                    "  Scenario Outline: Test <value>\n"
+                    "    Given a <value>\n\n"
+                    "    Examples: Valid data\n"
+                    "      | value |\n"
+                    "      | a     |\n\n"
+                    "    Examples: Valid data\n"
+                    "      | value |\n"
+                    "      | b     |\n"
+                ),
+                after=(
+                    "  Scenario Outline: Test <value>\n"
+                    "    Given a <value>\n\n"
+                    "    Examples: Valid data\n"
+                    "      | value |\n"
+                    "      | a     |\n\n"
+                    "    Examples: Edge cases\n"
+                    "      | value |\n"
+                    "      | b     |\n"
+                ),
+                description="Rename one of the duplicate Examples blocks.",
+            ),
+        ],
+        tags=["examples", "naming", "scenario-outline"],
+    )
+
+    def check(self, feature: Any, config: Config) -> list[Diagnostic]:
+        diagnostics: list[Diagnostic] = []
+
+        for scenario in feature.all_scenarios():
+            examples = getattr(scenario, "examples", None)
+            if not examples:
+                continue
+
+            seen: dict[str, int] = {}
+            for example in examples:
+                name = (getattr(example, "name", "") or "").strip()
+                if not name:
+                    continue
+                if name in seen:
+                    diagnostics.append(
+                        self.diagnostic(
+                            message=(
+                                f"Duplicate Examples name '{name}' "
+                                f"(first defined at line {seen[name]})"
+                            ),
+                            node=example,
+                            suggestion=(
+                                "Rename this Examples block to have "
+                                "a unique name within the scenario outline."
+                            ),
+                        )
+                    )
+                else:
+                    location = getattr(example, "location", None)
+                    line = getattr(location, "line", 1) if location else 1
+                    seen[name] = line
+
+        return diagnostics
+
+
 __all__ = [
+    "DuplicateExamplesNameRule",
     "DuplicateFeatureNamesRule",
     "DuplicateScenarioNamesRule",
     "EmptyFeatureRule",
+    "EmptyScenarioRule",
     "InvalidExampleTableStructureRule",
     "InvalidTagSyntaxRule",
     "ScenarioOutlineWithoutExamplesRule",
+    "UndefinedOutlinePlaceholderRule",
+    "UnusedOutlinePlaceholderRule",
 ]

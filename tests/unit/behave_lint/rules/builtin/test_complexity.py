@@ -7,6 +7,7 @@ from pathlib import Path
 from behave_lint.models.config import Config
 from behave_lint.models.enums import Category, Severity
 from behave_lint.rules.builtin.complexity import (
+    FeatureFileTooLongRule,
     LongStepTextRule,
     TooManyExampleRowsRule,
     TooManyScenariosRule,
@@ -272,9 +273,40 @@ class TestRegisterBuiltinsWithComplexity:
 
         registry = RuleRegistry()
         register_builtins(registry)
-        assert len(registry) == 31
+        assert len(registry) == 41
         assert "BX001" in registry
         assert "BX002" in registry
         assert "BX003" in registry
         assert "BX004" in registry
         assert "BX005" in registry
+        assert "BX006" in registry
+
+
+class TestFeatureFileTooLongRule:
+    """Tests for BX006 - Feature File Too Long."""
+
+    def test_no_diagnostic_when_file_short(self, tmp_path: Path) -> None:
+        feature = _load_feature(
+            tmp_path,
+            "Feature: Test\n\n"
+            "  Scenario: Test\n"
+            "    Given a step\n",
+        )
+        rule = FeatureFileTooLongRule()
+        diags = rule.check(feature, Config())
+        assert diags == []
+
+    def test_diagnostic_when_file_too_long(self, tmp_path: Path) -> None:
+        lines = ["Feature: Big Feature\n\n"]
+        for i in range(80):
+            lines.append(f"  Scenario: Scenario {i}\n")
+            lines.append("    Given a step\n")
+            lines.append("    Then a result\n\n")
+        content = "".join(lines)
+        assert len(content.splitlines()) > 300
+
+        feature = _load_feature(tmp_path, content)
+        rule = FeatureFileTooLongRule()
+        diags = rule.check(feature, Config())
+        assert len(diags) == 1
+        assert diags[0].rule_id == "BX006"

@@ -1,4 +1,4 @@
-# Style Rules (BS001–BS005)
+# Style Rules (BS001–BS008)
 
 Rules that enforce style and convention preferences.
 
@@ -174,3 +174,44 @@ feature's purpose and provides context for the scenarios below.
       Scenario: Successful login
         ...
     ```
+
+---
+
+## BS006: step-keyword-casing
+
+Detects step keywords that are not properly capitalized. Gherkin
+keywords (Given, When, Then, And, But) should start with an uppercase
+letter.
+
+**Auto-fixable:** Yes — capitalizes the first letter of step keywords.
+
+**Tags:** `steps`, `keywords`, `casing`
+
+**Since:** 1.2.0
+
+---
+
+## BS007: trailing-whitespace
+
+Detects lines in feature files that have trailing whitespace (spaces
+or tabs at the end of the line). Trailing whitespace causes unnecessary
+diff noise.
+
+**Auto-fixable:** Yes — removes trailing whitespace from each line.
+
+**Tags:** `whitespace`, `formatting`
+
+**Since:** 1.2.0
+
+---
+
+## BS008: tab-indentation
+
+Detects lines that use tab characters for indentation. Spaces are the
+standard indentation for Gherkin feature files.
+
+**Auto-fixable:** Yes — replaces tabs with spaces (2 per level).
+
+**Tags:** `indentation`, `tabs`, `formatting`
+
+**Since:** 1.2.0

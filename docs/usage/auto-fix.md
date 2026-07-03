@@ -30,6 +30,9 @@ behave-lint features/ --fix --unsafe-fixes
 | **BD004** (step-parameter-convention) | Convert `{param}` to `<param>` when both conventions are mixed. |
 | **BD005** (step-trailing-punctuation) | Remove trailing punctuation from step text. |
 | **BS001** (tag-casing) | Convert tags to lowercase `snake_case`. |
+| **BS006** (step-keyword-casing) | Capitalize step keywords (e.g., `given` → `Given`). |
+| **BS007** (trailing-whitespace) | Remove trailing whitespace from lines. |
+| **BS008** (tab-indentation) | Replace tab indentation with spaces (2 per level). |
 
 ### Unsafe fixes
 
@@ -108,4 +111,60 @@ After `--fix`:
 ```gherkin
   Scenario Outline: Test <value>
     Given a <value> with <count> items
+```
+
+### Fix step keyword casing (BS006)
+
+Before:
+
+```gherkin
+  Scenario: Login
+    given a user
+    when I click submit
+    then I see the dashboard
+```
+
+After `--fix`:
+
+```gherkin
+  Scenario: Login
+    Given a user
+    When I click submit
+    Then I see the dashboard
+```
+
+### Fix trailing whitespace (BS007)
+
+Before:
+
+```gherkin
+Feature: Login   
+  Scenario: Test  
+    Given a step
+```
+
+After `--fix`:
+
+```gherkin
+Feature: Login
+  Scenario: Test
+    Given a step
+```
+
+### Fix tab indentation (BS008)
+
+Before:
+
+```gherkin
+Feature: Login
+	Scenario: Test
+		Given a step
+```
+
+After `--fix`:
+
+```gherkin
+Feature: Login
+  Scenario: Test
+    Given a step
 ```

@@ -9,7 +9,9 @@ from behave_lint.models.enums import Category, Severity
 from behave_lint.rules.builtin.pedantic import (
     MissingBackgroundRule,
     MissingExamplesNameRule,
+    MissingFeatureDescriptionRule,
     MissingScenarioTagsRule,
+    ScenarioWithoutAssertionRule,
     ShortFeatureNameRule,
     ShortScenarioNameRule,
 )
@@ -206,9 +208,71 @@ class TestRegisterBuiltinsWithPedantic:
 
         registry = RuleRegistry()
         register_builtins(registry)
-        assert len(registry) == 31
+        assert len(registry) == 41
         assert "BP001" in registry
         assert "BP002" in registry
         assert "BP003" in registry
         assert "BP004" in registry
         assert "BP005" in registry
+        assert "BP006" in registry
+        assert "BP007" in registry
+
+
+class TestMissingFeatureDescriptionRule:
+    """Tests for BP006 - Missing Feature Description."""
+
+    def test_no_diagnostic_when_description_present(self, tmp_path: Path) -> None:
+        feature = _load_feature(
+            tmp_path,
+            "Feature: Test\n"
+            "  As a user\n"
+            "  I want something\n"
+            "  So that I can do things\n\n"
+            "  Scenario: Test\n"
+            "    Given a step\n",
+        )
+        rule = MissingFeatureDescriptionRule()
+        diags = rule.check(feature, Config())
+        assert diags == []
+
+    def test_diagnostic_when_description_missing(self, tmp_path: Path) -> None:
+        feature = _load_feature(
+            tmp_path,
+            "Feature: Test\n\n"
+            "  Scenario: Test\n"
+            "    Given a step\n",
+        )
+        rule = MissingFeatureDescriptionRule()
+        diags = rule.check(feature, Config())
+        assert len(diags) == 1
+        assert diags[0].rule_id == "BP006"
+
+
+class TestScenarioWithoutAssertionRule:
+    """Tests for BP007 - Scenario Without Assertion."""
+
+    def test_no_diagnostic_when_then_step_present(self, tmp_path: Path) -> None:
+        feature = _load_feature(
+            tmp_path,
+            "Feature: Test\n\n"
+            "  Scenario: Test\n"
+            "    Given a step\n"
+            "    When I do something\n"
+            "    Then I see a result\n",
+        )
+        rule = ScenarioWithoutAssertionRule()
+        diags = rule.check(feature, Config())
+        assert diags == []
+
+    def test_diagnostic_when_no_then_step(self, tmp_path: Path) -> None:
+        feature = _load_feature(
+            tmp_path,
+            "Feature: Test\n\n"
+            "  Scenario: Test\n"
+            "    Given a step\n"
+            "    When I do something\n",
+        )
+        rule = ScenarioWithoutAssertionRule()
+        diags = rule.check(feature, Config())
+        assert len(diags) == 1
+        assert diags[0].rule_id == "BP007"

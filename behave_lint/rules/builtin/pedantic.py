@@ -357,10 +357,156 @@ class MissingExamplesNameRule(Rule):
         return diagnostics
 
 
+class MissingFeatureDescriptionRule(Rule):
+    """BP006: Detect features without a description.
+
+    A feature should have a description block (text between the
+    Feature line and the first Scenario/Background) explaining
+    the feature's purpose.
+    """
+
+    metadata = RuleMetadata(
+        rule_id="BP006",
+        name="missing-feature-description",
+        title="Feature should have a description",
+        description=(
+            "Detects features that lack a description block. A "
+            "description explains the feature's purpose and improves "
+            "readability for non-technical stakeholders."
+        ),
+        category=Category.PEDANTIC,
+        default_severity=Severity.INFO,
+        motivation=(
+            "A feature without a description is just a collection of "
+            "scenarios. A description provides context and helps "
+            "stakeholders understand the feature's intent."
+        ),
+        since="1.2.0",
+        examples=[
+            RuleExample(
+                before=(
+                    "Feature: User Authentication\n"
+                    "  Scenario: Login\n"
+                    "    Given a user\n"
+                ),
+                after=(
+                    "Feature: User Authentication\n"
+                    "  As a registered user\n"
+                    "  I want to log in\n"
+                    "  So that I can access my account\n\n"
+                    "  Scenario: Login\n"
+                    "    Given a user\n"
+                ),
+                description="Add a description after the Feature line.",
+            ),
+        ],
+        tags=["feature", "description", "pedantic"],
+    )
+
+    def check(self, feature: Any, config: Config) -> list[Diagnostic]:
+        description = getattr(feature, "description", None)
+        if not description or not str(description).strip():
+            location = getattr(feature, "location", None)
+            file_path = getattr(location, "filename", "") if location else ""
+            return [
+                self.diagnostic(
+                    message=(
+                        f"Feature '{feature.name}' has no description"
+                    ),
+                    node=feature,
+                    file_path=file_path or None,
+                    suggestion=(
+                        "Add a description (e.g., 'As a ... I want to "
+                        "... So that ...') after the Feature line."
+                    ),
+                    severity=Severity.INFO,
+                )
+            ]
+        return []
+
+
+class ScenarioWithoutAssertionRule(Rule):
+    """BP007: Detect scenarios without a 'Then' step.
+
+    Every scenario should include at least one assertion (Then step)
+    to verify the expected outcome. Scenarios without assertions
+    don't actually test anything.
+    """
+
+    metadata = RuleMetadata(
+        rule_id="BP007",
+        name="scenario-without-assertion",
+        title="Scenario has no 'Then' step",
+        description=(
+            "Detects scenarios that do not contain at least one 'Then' "
+            "step. Without an assertion, the scenario does not verify "
+            "any expected outcome."
+        ),
+        category=Category.PEDANTIC,
+        default_severity=Severity.INFO,
+        motivation=(
+            "A scenario without a 'Then' step executes actions but "
+            "never verifies the result. This gives false confidence "
+            "that the test is passing."
+        ),
+        since="1.2.0",
+        examples=[
+            RuleExample(
+                before=(
+                    "  Scenario: Setup only\n"
+                    "    Given a user\n"
+                    "    When I log in\n"
+                ),
+                after=(
+                    "  Scenario: Login succeeds\n"
+                    "    Given a user\n"
+                    "    When I log in\n"
+                    "    Then I should be on the dashboard\n"
+                ),
+                description="Add a 'Then' step to verify the outcome.",
+            ),
+        ],
+        tags=["scenarios", "assertion", "pedantic"],
+    )
+
+    _ASSERTION_KEYWORDS: ClassVar[frozenset[str]] = frozenset({"then"})
+
+    def check(self, feature: Any, config: Config) -> list[Diagnostic]:
+        diagnostics: list[Diagnostic] = []
+
+        for scenario in feature.all_scenarios():
+            steps = getattr(scenario, "steps", [])
+            has_assertion = False
+            for step in steps:
+                keyword = getattr(step, "keyword", "").strip().lower()
+                if keyword in self._ASSERTION_KEYWORDS:
+                    has_assertion = True
+                    break
+
+            if not has_assertion and steps:
+                diagnostics.append(
+                    self.diagnostic(
+                        message=(
+                            f"Scenario '{scenario.name}' has no 'Then' step"
+                        ),
+                        node=scenario,
+                        suggestion=(
+                            "Add a 'Then' step to verify the expected "
+                            "outcome of this scenario."
+                        ),
+                        severity=Severity.INFO,
+                    )
+                )
+
+        return diagnostics
+
+
 __all__ = [
     "MissingBackgroundRule",
     "MissingExamplesNameRule",
+    "MissingFeatureDescriptionRule",
     "MissingScenarioTagsRule",
+    "ScenarioWithoutAssertionRule",
     "ShortFeatureNameRule",
     "ShortScenarioNameRule",
 ]

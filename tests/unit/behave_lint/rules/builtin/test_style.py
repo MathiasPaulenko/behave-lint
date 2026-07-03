@@ -10,8 +10,11 @@ from behave_lint.rules.builtin.style import (
     BackgroundNameRule,
     FeatureDescriptionFormattingRule,
     KeywordOrderingRule,
+    StepKeywordCasingRule,
     StepPhrasingRule,
+    TabIndentationRule,
     TagCasingRule,
+    TrailingWhitespaceRule,
 )
 from behave_lint.rules.registry import RuleRegistry
 
@@ -278,9 +281,95 @@ class TestRegisterBuiltinsWithStyle:
 
         registry = RuleRegistry()
         register_builtins(registry)
-        assert len(registry) == 31
+        assert len(registry) == 41
         assert "BS001" in registry
         assert "BS002" in registry
         assert "BS003" in registry
         assert "BS004" in registry
         assert "BS005" in registry
+        assert "BS006" in registry
+        assert "BS007" in registry
+        assert "BS008" in registry
+
+
+class TestStepKeywordCasingRule:
+    """Tests for BS006 - Step Keyword Casing."""
+
+    def test_no_diagnostic_when_keywords_capitalized(self, tmp_path: Path) -> None:
+        feature = _load_feature(
+            tmp_path,
+            "Feature: Test\n\n"
+            "  Scenario: Test\n"
+            "    Given a step\n"
+            "    When I do something\n"
+            "    Then I see a result\n",
+        )
+        rule = StepKeywordCasingRule()
+        diags = rule.check(feature, Config())
+        assert diags == []
+
+    def test_diagnostic_when_keywords_lowercase(self, tmp_path: Path) -> None:
+        feature = _load_feature(
+            tmp_path,
+            "Feature: Test\n\n"
+            "  Scenario: Test\n"
+            "    given a step\n"
+            "    when I do something\n"
+            "    then I see a result\n",
+        )
+        rule = StepKeywordCasingRule()
+        diags = rule.check(feature, Config())
+        assert len(diags) == 3
+        assert all(d.rule_id == "BS006" for d in diags)
+
+
+class TestTrailingWhitespaceRule:
+    """Tests for BS007 - Trailing Whitespace."""
+
+    def test_no_diagnostic_when_no_trailing_whitespace(self, tmp_path: Path) -> None:
+        feature = _load_feature(
+            tmp_path,
+            "Feature: Test\n\n"
+            "  Scenario: Test\n"
+            "    Given a step\n",
+        )
+        rule = TrailingWhitespaceRule()
+        diags = rule.check(feature, Config())
+        assert diags == []
+
+    def test_diagnostic_when_trailing_whitespace(self, tmp_path: Path) -> None:
+        feature = _load_feature(
+            tmp_path,
+            "Feature: Test   \n  Scenario: A  \n    Given a step\n",
+        )
+        rule = TrailingWhitespaceRule()
+        diags = rule.check(feature, Config())
+        assert len(diags) == 2
+        assert all(d.rule_id == "BS007" for d in diags)
+
+
+class TestTabIndentationRule:
+    """Tests for BS008 - Tab Indentation."""
+
+    def test_no_diagnostic_when_spaces_used(self, tmp_path: Path) -> None:
+        feature = _load_feature(
+            tmp_path,
+            "Feature: Test\n\n"
+            "  Scenario: Test\n"
+            "    Given a step\n",
+        )
+        rule = TabIndentationRule()
+        diags = rule.check(feature, Config())
+        assert diags == []
+
+    def test_diagnostic_when_tabs_used(self, tmp_path: Path) -> None:
+        feature = _load_feature(
+            tmp_path,
+            "Feature: Test\n"
+            "\tScenario: A\n"
+            "\t\tGiven a step\n",
+        )
+        rule = TabIndentationRule()
+        diags = rule.check(feature, Config())
+        assert len(diags) == 2
+        assert all(d.rule_id == "BS008" for d in diags)

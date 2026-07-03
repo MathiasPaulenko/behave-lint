@@ -5,7 +5,7 @@ Behave test suites.
 
 ## Features
 
-- **31 built-in rules** across 6 categories: correctness, step
+- **41 built-in rules** across 6 categories: correctness, step
   definitions, consistency, complexity, style, and pedantic.
 - **Auto-fix** support for common violations.
 - **Multiple output formats**: console, JSON, SARIF, Markdown, GitHub

@@ -1,4 +1,4 @@
-# Complexity Rules (BX001–BX005)
+# Complexity Rules (BX001–BX006)
 
 Rules that detect overly complex features and scenarios.
 
@@ -180,3 +180,17 @@ Too many tags reduce clarity.
     @smoke @login @critical
     Feature: Login
     ```
+
+---
+
+## BX006: feature-file-too-long
+
+Detects feature files that exceed the maximum number of lines. Long
+files are hard to navigate and should be split into smaller, focused
+feature files.
+
+**Configurable:** `max_file_lines` (default: 300)
+
+**Tags:** `feature`, `file`, `complexity`
+
+**Since:** 1.2.0

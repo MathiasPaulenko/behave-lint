@@ -7,12 +7,16 @@ from pathlib import Path
 from behave_lint.models.config import Config
 from behave_lint.models.enums import Category, Severity
 from behave_lint.rules.builtin.correctness import (
+    DuplicateExamplesNameRule,
     DuplicateFeatureNamesRule,
     DuplicateScenarioNamesRule,
     EmptyFeatureRule,
+    EmptyScenarioRule,
     InvalidExampleTableStructureRule,
     InvalidTagSyntaxRule,
     ScenarioOutlineWithoutExamplesRule,
+    UndefinedOutlinePlaceholderRule,
+    UnusedOutlinePlaceholderRule,
 )
 from behave_lint.rules.registry import RuleRegistry
 
@@ -350,7 +354,7 @@ class TestRegisterBuiltins:
 
         registry = RuleRegistry()
         register_builtins(registry)
-        assert len(registry) == 31
+        assert len(registry) == 41
         assert "BC001" in registry
         assert "BC002" in registry
         assert "BC003" in registry
@@ -368,4 +372,142 @@ class TestRegisterBuiltins:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             register_builtins(registry)
-        assert len(registry) == 31
+        assert len(registry) == 41
+
+
+class TestEmptyScenarioRule:
+    """Tests for BC007 - Empty Scenario."""
+
+    def test_no_diagnostic_when_scenario_has_steps(self, tmp_path: Path) -> None:
+        feature = _load_feature(
+            tmp_path,
+            "Feature: Test\n\n"
+            "  Scenario: With steps\n"
+            "    Given a step\n"
+            "    Then a result\n",
+        )
+        rule = EmptyScenarioRule()
+        diags = rule.check(feature, Config())
+        assert diags == []
+
+    def test_diagnostic_when_scenario_has_no_steps(self, tmp_path: Path) -> None:
+        feature = _load_feature(
+            tmp_path,
+            "Feature: Test\n\n"
+            "  Scenario: Empty\n\n"
+            "  Scenario: Not empty\n"
+            "    Given a step\n",
+        )
+        rule = EmptyScenarioRule()
+        diags = rule.check(feature, Config())
+        assert len(diags) == 1
+        assert diags[0].rule_id == "BC007"
+        assert "Empty" in diags[0].message
+
+
+class TestUnusedOutlinePlaceholderRule:
+    """Tests for BC008 - Unused Outline Placeholder."""
+
+    def test_no_diagnostic_when_all_columns_used(self, tmp_path: Path) -> None:
+        feature = _load_feature(
+            tmp_path,
+            "Feature: Test\n\n"
+            "  Scenario Outline: Test <a> and <b>\n"
+            "    Given a <a> and b <b>\n\n"
+            "    Examples:\n"
+            "      | a | b |\n"
+            "      | 1 | 2 |\n",
+        )
+        rule = UnusedOutlinePlaceholderRule()
+        diags = rule.check(feature, Config())
+        assert diags == []
+
+    def test_diagnostic_when_column_unused(self, tmp_path: Path) -> None:
+        feature = _load_feature(
+            tmp_path,
+            "Feature: Test\n\n"
+            "  Scenario Outline: Test <a>\n"
+            "    Given a <a>\n\n"
+            "    Examples:\n"
+            "      | a | unused |\n"
+            "      | 1 | 2     |\n",
+        )
+        rule = UnusedOutlinePlaceholderRule()
+        diags = rule.check(feature, Config())
+        assert len(diags) == 1
+        assert diags[0].rule_id == "BC008"
+        assert "unused" in diags[0].message
+
+
+class TestUndefinedOutlinePlaceholderRule:
+    """Tests for BC009 - Undefined Outline Placeholder."""
+
+    def test_no_diagnostic_when_all_placeholders_defined(self, tmp_path: Path) -> None:
+        feature = _load_feature(
+            tmp_path,
+            "Feature: Test\n\n"
+            "  Scenario Outline: Test <a>\n"
+            "    Given a <a>\n\n"
+            "    Examples:\n"
+            "      | a |\n"
+            "      | 1 |\n",
+        )
+        rule = UndefinedOutlinePlaceholderRule()
+        diags = rule.check(feature, Config())
+        assert diags == []
+
+    def test_diagnostic_when_placeholder_undefined(self, tmp_path: Path) -> None:
+        feature = _load_feature(
+            tmp_path,
+            "Feature: Test\n\n"
+            "  Scenario Outline: Test <a>\n"
+            "    Given a <a> with <count>\n\n"
+            "    Examples:\n"
+            "      | a |\n"
+            "      | 1 |\n",
+        )
+        rule = UndefinedOutlinePlaceholderRule()
+        diags = rule.check(feature, Config())
+        assert len(diags) == 1
+        assert diags[0].rule_id == "BC009"
+        assert "count" in diags[0].message
+
+
+class TestDuplicateExamplesNameRule:
+    """Tests for BC010 - Duplicate Examples Name."""
+
+    def test_no_diagnostic_when_names_unique(self, tmp_path: Path) -> None:
+        feature = _load_feature(
+            tmp_path,
+            "Feature: Test\n\n"
+            "  Scenario Outline: Test <a>\n"
+            "    Given a <a>\n\n"
+            "    Examples: First\n"
+            "      | a |\n"
+            "      | 1 |\n\n"
+            "    Examples: Second\n"
+            "      | a |\n"
+            "      | 2 |\n",
+        )
+        rule = DuplicateExamplesNameRule()
+        diags = rule.check(feature, Config())
+        assert diags == []
+
+    def test_diagnostic_when_names_duplicate(self, tmp_path: Path) -> None:
+        feature = _load_feature(
+            tmp_path,
+            "Feature: Test\n\n"
+            "  Scenario Outline: Test <a>\n"
+            "    Given a <a>\n\n"
+            "    Examples: Same\n"
+            "      | a |\n"
+            "      | 1 |\n\n"
+            "    Examples: Same\n"
+            "      | a |\n"
+            "      | 2 |\n",
+        )
+        rule = DuplicateExamplesNameRule()
+        diags = rule.check(feature, Config())
+        assert len(diags) == 1
+        assert diags[0].rule_id == "BC010"
+        assert "Same" in diags[0].message

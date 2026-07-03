@@ -20,6 +20,7 @@ _DEFAULT_MAX_STEPS = 10
 _DEFAULT_MAX_SCENARIOS = 10
 _DEFAULT_MAX_EXAMPLE_ROWS = 20
 _DEFAULT_MAX_STEP_LENGTH = 120
+_DEFAULT_MAX_FILE_LINES = 300
 
 
 class TooManyStepsRule(Rule):
@@ -431,7 +432,101 @@ class TooManyTagsRule(Rule):
         return diagnostics
 
 
+class FeatureFileTooLongRule(Rule):
+    """BX006: Detect feature files with too many lines.
+
+    Feature files that are too long are hard to navigate and maintain.
+    The default threshold is 300 lines.
+    """
+
+    metadata = RuleMetadata(
+        rule_id="BX006",
+        name="feature-file-too-long",
+        title="Feature file has too many lines",
+        description=(
+            "Detects feature files that exceed the maximum number of "
+            "lines. Long files are hard to navigate and should be "
+            "split into smaller, focused feature files."
+        ),
+        category=Category.COMPLEXITY,
+        default_severity=Severity.WARNING,
+        motivation=(
+            "A feature file with many lines tries to cover too much. "
+            "Splitting it into smaller files improves organization "
+            "and maintainability."
+        ),
+        since="1.2.0",
+        examples=[
+            RuleExample(
+                before=(
+                    "# feature.feature (350 lines)\n"
+                    "Feature: Big Feature\n"
+                    "  ...many scenarios...\n"
+                ),
+                after=(
+                    "# feature_part1.feature\n"
+                    "Feature: Big Feature Part 1\n"
+                    "  ...scenarios 1-10...\n\n"
+                    "# feature_part2.feature\n"
+                    "Feature: Big Feature Part 2\n"
+                    "  ...scenarios 11-20...\n"
+                ),
+                description="Split the feature file into smaller files.",
+            ),
+        ],
+        tags=["feature", "file", "complexity"],
+        configurable=True,
+    )
+
+    default_params: ClassVar[dict[str, Any]] = {
+        "max_file_lines": _DEFAULT_MAX_FILE_LINES
+    }
+
+    def check(self, feature: Any, config: Config) -> list[Diagnostic]:
+        max_lines = _DEFAULT_MAX_FILE_LINES
+
+        rule_config = getattr(config, "rules", {}).get("BX006", {})
+        if isinstance(rule_config, dict):
+            max_lines = rule_config.get("max_file_lines", max_lines)
+
+        file_path = getattr(feature, "file_path", None)
+        if not file_path:
+            location = getattr(feature, "location", None)
+            if location is not None:
+                file_path = getattr(location, "filename", None)
+        if not file_path:
+            return []
+
+        from pathlib import Path
+
+        try:
+            content = Path(file_path).read_text(encoding="utf-8")
+        except OSError:
+            return []
+
+        line_count = content.count("\n")
+        if content and not content.endswith("\n"):
+            line_count += 1
+        if line_count > max_lines:
+            return [
+                self.diagnostic(
+                    message=(
+                        f"Feature file '{file_path}' has {line_count} "
+                        f"lines (max: {max_lines})"
+                    ),
+                    node=feature,
+                    file_path=file_path,
+                    suggestion=(
+                        "Split this feature file into smaller, "
+                        "focused feature files."
+                    ),
+                )
+            ]
+        return []
+
+
 __all__ = [
+    "FeatureFileTooLongRule",
     "LongStepTextRule",
     "TooManyExampleRowsRule",
     "TooManyScenariosRule",

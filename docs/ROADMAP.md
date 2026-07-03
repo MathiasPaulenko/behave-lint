@@ -4,7 +4,7 @@ This document summarizes the implementation roadmap.
 
 ## Current Status
 
-**Stable** — v1.1.0 released. 31 built-in rules, auto-fix, plugins,
+**Stable** — v1.1.0 released. 41 built-in rules, auto-fix, plugins,
 reporters, Typer-based CLI, and full documentation. Available on PyPI.
 
 ## Milestones

@@ -257,7 +257,7 @@ class TestRegisterBuiltinsWithConsistency:
 
         registry = RuleRegistry()
         register_builtins(registry)
-        assert len(registry) == 31
+        assert len(registry) == 41
         assert "BK001" in registry
         assert "BK002" in registry
         assert "BK003" in registry

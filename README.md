@@ -9,7 +9,7 @@
 
 **behave-lint** statically analyzes your Gherkin feature files for
 correctness, consistency, complexity, and style — without executing a
-single test. It ships with **31 built-in rules** across 6 categories,
+single test. It ships with **41 built-in rules** across 6 categories,
 supports **auto-fix** for common violations, and outputs in **5 formats**
 including SARIF for GitHub Code Scanning.
 
@@ -59,7 +59,7 @@ behave-lint --explain BC001
 
 ## Features
 
-- **31 built-in rules** across 6 categories: correctness, step
+- **41 built-in rules** across 6 categories: correctness, step
   definitions, consistency, complexity, style, and pedantic.
 - **Auto-fix** — safe, deterministic fixes for common violations
   (`--fix`). Unsafe fixes require `--unsafe-fixes`.
