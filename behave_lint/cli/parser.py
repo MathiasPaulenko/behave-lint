@@ -27,6 +27,7 @@ class CLIArgs:
         select: Rule IDs to enable (comma-separated).
         ignore: Rule IDs to disable (comma-separated).
         profile: Profile name (e.g. "recommended", "strict", "minimal").
+        group: Group names (e.g. ["correctness", "style"]).
         output: Output format(s).
         output_file: Output file path (None = stdout).
         config: Explicit path to pyproject.toml.
@@ -49,6 +50,7 @@ class CLIArgs:
     select: list[str] = field(default_factory=list)
     ignore: list[str] = field(default_factory=list)
     profile: str = "none"
+    group: list[str] = field(default_factory=list)
     output: str = "console"
     output_file: str | None = None
     config: str | None = None
@@ -134,6 +136,20 @@ def lint(
             help="Use a built-in profile: recommended, strict, minimal.",
         ),
     ] = None,
+    group: Annotated[
+        str | None,
+        typer.Option(
+            "--group",
+            help=(
+                "Select rules by group (comma-separated). "
+                "Categories: correctness, style, pedantic, "
+                "step-definitions, consistency. "
+                "Tags: naming, tags, steps, background, description, "
+                "documentation, formatting, examples, scenarios, "
+                "readability."
+            ),
+        ),
+    ] = None,
     fail_on: Annotated[
         FailOn,
         typer.Option("--fail-on", help="Minimum severity for non-zero exit."),
@@ -203,6 +219,7 @@ def lint(
         select=_parse_rule_list(select) if select else [],
         ignore=_parse_rule_list(ignore) if ignore else [],
         profile=profile if profile else "none",
+        group=_parse_rule_list(group) if group else [],
         output=output.value,
         output_file=output_file,
         config=config,

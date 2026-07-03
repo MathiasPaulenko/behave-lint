@@ -38,6 +38,7 @@ from behave_lint.configuration.schema import (
     validate_severity_overrides,
     validate_types,
 )
+from behave_lint.exceptions import InvalidConfigValueError
 from behave_lint.models.config import Config
 
 # Config fields that are dicts (merged rather than replaced)
@@ -46,7 +47,9 @@ _DICT_FIELDS: frozenset[str] = frozenset(
 )
 
 # Config fields that are lists (replaced, not concatenated)
-_LIST_FIELDS: frozenset[str] = frozenset({"select", "ignore", "paths", "exclude"})
+_LIST_FIELDS: frozenset[str] = frozenset(
+    {"select", "ignore", "paths", "exclude", "group"}
+)
 
 
 def load_from_env(env: dict[str, str] | None = None) -> dict[str, object]:
@@ -155,6 +158,16 @@ def build_config(merged: dict[str, object]) -> Config:
     if not isinstance(profile, str):
         profile = "none"
 
+    group_raw = merged.get("group", [])
+    if isinstance(group_raw, str):
+        from behave_lint.configuration.groups import parse_groups
+
+        group = parse_groups(group_raw)
+    elif isinstance(group_raw, list):
+        group = list(group_raw)
+    else:
+        group = []
+
     paths = merged.get("paths", ["features/"])
     if not isinstance(paths, list):
         paths = ["features/"]
@@ -191,6 +204,7 @@ def build_config(merged: dict[str, object]) -> Config:
         select=list(select),
         ignore=list(ignore),
         profile=profile,
+        group=list(group),
         severity_overrides=severity_overrides,
         output=output,
         output_file=output_file if isinstance(output_file, str) else None,
@@ -206,6 +220,28 @@ def build_config(merged: dict[str, object]) -> Config:
         fail_on=fail_on,
         max_warnings=max_warnings,
     )
+
+
+def _build_rule_mappings() -> tuple[set[str], dict[str, set[str]]]:
+    """Build rule ID and tag mappings from built-in rules.
+
+    Used by group expansion to map group names to rule IDs.
+
+    Returns:
+        Tuple of (all rule IDs, rule ID -> tags mapping).
+    """
+    from behave_lint.rules.builtin import _BUILTIN_RULES
+
+    all_ids: set[str] = set()
+    rule_tags: dict[str, set[str]] = {}
+    for rule_class in _BUILTIN_RULES:
+        metadata = getattr(rule_class, "metadata", None)
+        if metadata is None:
+            continue
+        rule_id = metadata.rule_id
+        all_ids.add(rule_id)
+        rule_tags[rule_id] = set(metadata.tags)
+    return all_ids, rule_tags
 
 
 def load_config(
@@ -275,6 +311,40 @@ def load_config(
         merged = merge_configs(merged, profile_config)
         merged["profile"] = profile_name
 
+    # 4b. Determine groups from highest-precedence source:
+    #     CLI overrides > env > pyproject.toml > defaults
+    group_names: list[str] = []
+    if overrides is not None:
+        group_raw = overrides.get("group", [])
+        if isinstance(group_raw, str):
+            from behave_lint.configuration.groups import parse_groups
+
+            group_names = parse_groups(group_raw)
+        elif isinstance(group_raw, list):
+            group_names = list(group_raw)
+    if not group_names:
+        env_group = env.get(f"{ENV_PREFIX}GROUP") if env else None
+        if env_group is None:
+            import os
+
+            env_group = os.environ.get(f"{ENV_PREFIX}GROUP")
+        if env_group:
+            from behave_lint.configuration.groups import parse_groups
+
+            group_names = parse_groups(env_group)
+    if not group_names:
+        toml_group = toml_config.get("group", [])
+        if isinstance(toml_group, str):
+            from behave_lint.configuration.groups import parse_groups
+
+            group_names = parse_groups(toml_group)
+        elif isinstance(toml_group, list):
+            group_names = list(toml_group)
+
+    # 4c. Record group names for later expansion
+    if group_names:
+        merged["group"] = group_names
+
     # 5. pyproject.toml values (override profile)
     if toml_config:
         merged = merge_configs(merged, toml_config)
@@ -287,6 +357,57 @@ def load_config(
     if overrides is not None:
         normalized_overrides = normalize_keys(overrides)
         merged = merge_configs(merged, normalized_overrides)
+
+    # 8. Expand groups to rule IDs (after all merges, additive to select)
+    final_groups = merged.get("group", [])
+    if isinstance(final_groups, str):
+        from behave_lint.configuration.groups import parse_groups
+
+        final_groups = parse_groups(final_groups)
+        merged["group"] = final_groups
+    if isinstance(final_groups, list) and final_groups:
+        from behave_lint.configuration.groups import (
+            get_category_prefix,
+            get_group_tags,
+            is_category_group,
+            is_valid_group,
+        )
+
+        for gname in final_groups:
+            if not is_valid_group(gname):
+                from behave_lint.configuration.groups import get_group_names
+
+                valid = ", ".join(get_group_names())
+                raise InvalidConfigValueError(
+                    key="group",
+                    value=gname,
+                    expected=f"one of: {valid}",
+                )
+
+        all_rule_ids, rule_tags_map = _build_rule_mappings()
+
+        group_rule_ids: set[str] = set()
+        for gname in final_groups:
+            if is_category_group(gname):
+                prefix = get_category_prefix(gname)
+                if prefix:
+                    for rule_id in all_rule_ids:
+                        if rule_id.startswith(prefix):
+                            group_rule_ids.add(rule_id)
+            else:
+                tags = get_group_tags(gname)
+                if tags:
+                    for rule_id, rule_tags in rule_tags_map.items():
+                        if tags & rule_tags:
+                            group_rule_ids.add(rule_id)
+
+        if group_rule_ids:
+            existing_select = merged.get("select", [])
+            if not isinstance(existing_select, list):
+                existing_select = []
+            merged["select"] = list(
+                set(existing_select) | group_rule_ids,
+            )
 
     return build_config(merged)
 

@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2025-07-03
+
+### Added
+
+- Rule groups — select rules by category or tag via `--group` CLI flag,
+  `group` config key, or `BEHAVE_LINT_GROUP` env var.
+- 5 category-based groups: `correctness`, `style`, `pedantic`,
+  `step-definitions`, `consistency`.
+- 10 tag-based groups: `naming`, `tags`, `steps`, `background`,
+  `description`, `documentation`, `formatting`, `examples`,
+  `scenarios`, `readability`.
+- Groups are additive — they merge with explicit `--select` rules and
+    can be combined with profiles.
+- New `group` field in `Config` and `CLIArgs`.
+- New `behave_lint.configuration.groups` module with group definitions
+  and validation.
+- Documentation: `docs/usage/groups.md`.
+
 ## [1.4.0] - 2025-07-03
 
 ### Added

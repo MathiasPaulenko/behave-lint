@@ -4,8 +4,9 @@ This document summarizes the implementation roadmap.
 
 ## Current Status
 
-**Stable** — v1.1.0 released. 41 built-in rules, auto-fix, plugins,
-reporters, Typer-based CLI, and full documentation. Available on PyPI.
+**Stable** — v1.5.0 released. 41 built-in rules, auto-fix, profiles,
+groups, plugins, reporters, Typer-based CLI, and full documentation.
+Available on PyPI.
 
 ## Milestones
 
@@ -24,6 +25,7 @@ reporters, Typer-based CLI, and full documentation. Available on PyPI.
 | M11 | Documentation | Complete | 0.9.0-beta |
 | M12 | v1.0 | Complete | 1.0.0 |
 | M13 | CLI Typer Migration | Complete | 1.1.0 |
+| M14 | Rule Groups | Complete | 1.5.0 |
 
 ## Critical Path
 
