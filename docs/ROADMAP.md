@@ -4,9 +4,9 @@ This document summarizes the implementation roadmap.
 
 ## Current Status
 
-**Stable** — v1.8.0 released. 41 built-in rules, auto-fix (14 rules),
+**Stable** — v1.9.0 released. 41 built-in rules, auto-fix (14 rules),
 profiles, groups, incremental cache, cookiecutter plugin template,
-plugins, reporters, Typer-based CLI, and full documentation.
+watch mode, plugins, reporters, Typer-based CLI, and full documentation.
 Available on PyPI.
 
 ## Milestones
@@ -30,6 +30,7 @@ Available on PyPI.
 | M15 | Incremental Cache | Complete | 1.6.0 |
 | M16 | Cookiecutter Plugin Template | Complete | 1.7.0 |
 | M17 | Pedantic Auto-Fixes | Complete | 1.8.0 |
+| M18 | Watch Mode | Complete | 1.9.0 |
 
 ## Critical Path
 

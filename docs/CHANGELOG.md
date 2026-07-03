@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.0] - 2025-07-03
+
+### Added
+
+- Watch mode (`--watch` flag) — re-lints `.feature` files automatically on change.
+- `watchdog` as optional dependency (`pip install behave-lint[watch]`).
+- Debounce logic to prevent rapid re-linting on burst writes.
+- 14 new tests for watch mode (unit + integration with mocked observer).
+- Updated CLI reference docs with watch mode section and example.
+
 ## [1.8.0] - 2025-07-03
 
 ### Added

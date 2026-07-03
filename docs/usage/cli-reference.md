@@ -48,6 +48,12 @@ behave-lint [OPTIONS] [PATHS]...
 | `--fix` | Apply safe auto-fixes to `.feature` files. |
 | `--unsafe-fixes` | Also apply unsafe auto-fixes (use with caution). |
 
+## Watch mode
+
+| Option | Description |
+|--------|-------------|
+| `--watch` | Watch for file changes and re-lint automatically. Requires `watchdog` (`pip install behave-lint[watch]`). |
+
 ## Informational
 
 | Option | Description |
@@ -88,4 +94,7 @@ behave-lint features/ --profile minimal
 
 # Explain a rule
 behave-lint --explain BD005
+
+# Watch for changes and re-lint automatically
+behave-lint features/ --watch
 ```

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "behave-lint"
-version = "1.8.0"
+version = "1.9.0"
 description = "A fast, opinionated, extensible linter for Gherkin .feature files and Behave test suites."
 readme = "README.md"
 license = "MIT"
@@ -50,6 +50,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+watch = [
+    "watchdog>=4.0",
+]
 dev = [
     "ruff>=0.6",
     "mypy>=1.10",

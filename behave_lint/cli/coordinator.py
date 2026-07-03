@@ -65,6 +65,11 @@ def run_lint(args: CLIArgs) -> int:
 
     # Lint command — run the full pipeline
     try:
+        if args.watch:
+            from behave_lint.cli.watch import WatchMode
+
+            watcher = WatchMode(args, paths)
+            return watcher.run()
         return _run_lint(args, paths)
     except Exception as exc:
         print(f"Internal error: {exc}", file=sys.stderr)

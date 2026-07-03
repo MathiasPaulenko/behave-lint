@@ -40,6 +40,7 @@ class CLIArgs:
         clear_cache: Clear cache before running.
         fix: Apply safe auto-fixes (future).
         unsafe_fixes: Apply unsafe auto-fixes (future).
+        watch: Watch for file changes and re-lint automatically.
         list_rules: List all available rules and exit.
         explain: Show documentation for a rule and exit.
         fail_on: Minimum severity that causes non-zero exit.
@@ -63,6 +64,7 @@ class CLIArgs:
     clear_cache: bool = False
     fix: bool = False
     unsafe_fixes: bool = False
+    watch: bool = False
     list_rules: bool = False
     explain: str | None = None
     fail_on: str = "warning"
@@ -194,6 +196,10 @@ def lint(
         bool,
         typer.Option("--unsafe-fixes", help="Apply unsafe auto-fixes too."),
     ] = False,
+    watch: Annotated[
+        bool,
+        typer.Option("--watch", help="Watch for changes and re-lint automatically."),
+    ] = False,
     list_rules: Annotated[
         bool, typer.Option("--list-rules", help="List all available rules and exit.")
     ] = False,
@@ -232,6 +238,7 @@ def lint(
         clear_cache=clear_cache,
         fix=fix,
         unsafe_fixes=unsafe_fixes,
+        watch=watch,
         list_rules=list_rules,
         explain=explain,
         fail_on=fail_on.value,
