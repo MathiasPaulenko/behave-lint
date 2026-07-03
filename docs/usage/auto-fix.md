@@ -42,6 +42,9 @@ behave-lint features/ --fix --unsafe-fixes
 | **BS003** (step-phrasing) | Rewrite first-person steps to third-person. |
 | **BS004** (background-name) | Insert `Background: Common setup` as a placeholder name. |
 | **BS005** (feature-description) | Insert a template As a / I want / So that description. |
+| **BP001** (missing-scenario-tags) | Insert `@smoke` tag before scenarios without tags. |
+| **BP005** (missing-examples-name) | Append `Valid values` name to unnamed Examples sections. |
+| **BP006** (missing-feature-description) | Insert a template As a / I want / So that description after the Feature line. |
 
 ## Conflict resolution
 
@@ -171,4 +174,62 @@ After `--fix`:
 Feature: Login
   Scenario: Test
     Given a step
+```
+
+### Fix missing scenario tags (BP001)
+
+Before:
+
+```gherkin
+  Scenario: Login
+    Given a user
+```
+
+After `--fix --unsafe-fixes`:
+
+```gherkin
+  @smoke
+  Scenario: Login
+    Given a user
+```
+
+### Fix missing examples name (BP005)
+
+Before:
+
+```gherkin
+    Examples:
+      | role |
+      | admin |
+```
+
+After `--fix --unsafe-fixes`:
+
+```gherkin
+    Examples: Valid values
+      | role |
+      | admin |
+```
+
+### Fix missing feature description (BP006)
+
+Before:
+
+```gherkin
+Feature: User Authentication
+
+  Scenario: Login
+    Given a user
+```
+
+After `--fix --unsafe-fixes`:
+
+```gherkin
+Feature: User Authentication
+  As a [role]
+  I want to [action]
+  So that [benefit]
+
+  Scenario: Login
+    Given a user
 ```

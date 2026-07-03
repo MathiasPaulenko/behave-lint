@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.0] - 2025-07-03
+
+### Added
+
+- Auto-fix support for BP001 (missing-scenario-tags) — inserts `@smoke` tag (UNSAFE).
+- Auto-fix support for BP005 (missing-examples-name) — appends `Valid values` name (UNSAFE).
+- Auto-fix support for BP006 (missing-feature-description) — inserts As a / I want / So that template (UNSAFE).
+- 11 new tests for pedantic auto-fixes.
+- Updated auto-fix documentation with BP001, BP005, BP006 examples.
+
 ## [1.7.0] - 2025-07-03
 
 ### Added

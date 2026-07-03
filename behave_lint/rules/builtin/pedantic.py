@@ -10,9 +10,10 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
+from behave_lint.autofix.models import FixEdit
 from behave_lint.models.config import Config
 from behave_lint.models.diagnostic import Diagnostic
-from behave_lint.models.enums import Category, Severity
+from behave_lint.models.enums import AutoFixCapability, Category, Severity
 from behave_lint.models.rule_metadata import RuleExample, RuleMetadata
 from behave_lint.rules.base import Rule
 
@@ -52,6 +53,7 @@ class MissingScenarioTagsRule(Rule):
             ),
         ],
         tags=["tags", "scenarios", "pedantic"],
+        auto_fix=AutoFixCapability.UNSAFE,
     )
 
     def check(self, feature: Any, config: Config) -> list[Diagnostic]:
@@ -73,6 +75,66 @@ class MissingScenarioTagsRule(Rule):
                 )
 
         return diagnostics
+
+    def get_fixes(
+        self, feature: Any, config: Config, diagnostics: list[Diagnostic]
+    ) -> list[FixEdit]:
+        from pathlib import Path
+
+        fixes: list[FixEdit] = []
+        file_path = getattr(feature, "file_path", None)
+        if not file_path:
+            location = getattr(feature, "location", None)
+            if location is not None:
+                file_path = getattr(location, "filename", None)
+        if not file_path:
+            return fixes
+
+        try:
+            content = Path(file_path).read_text(encoding="utf-8")
+            lines = content.splitlines(keepends=True)
+        except OSError:
+            return fixes
+
+        diag_lines = {d.line for d in diagnostics if d.rule_id == "BP001"}
+        if not diag_lines:
+            return fixes
+
+        for scenario in feature.all_scenarios():
+            tags = getattr(scenario, "tags", [])
+            if tags:
+                continue
+
+            scenario_line = getattr(scenario, "line", None)
+            if scenario_line is None:
+                loc = getattr(scenario, "location", None)
+                if loc is not None:
+                    scenario_line = getattr(loc, "line", None)
+            if scenario_line is None or scenario_line not in diag_lines:
+                continue
+
+            idx = scenario_line - 1
+            if idx < 0 or idx >= len(lines):
+                continue
+
+            old_line = lines[idx]
+            indent = old_line[: len(old_line) - len(old_line.lstrip())]
+            new_text = f"{indent}@smoke\n{old_line}"
+
+            fixes.append(
+                FixEdit(
+                    file_path=file_path,
+                    start_line=scenario_line,
+                    end_line=scenario_line,
+                    old_text=old_line,
+                    new_text=new_text,
+                    safety=AutoFixCapability.UNSAFE,
+                    rule_id="BP001",
+                    diagnostic_line=scenario_line,
+                )
+            )
+
+        return fixes
 
 
 class MissingBackgroundRule(Rule):
@@ -327,6 +389,7 @@ class MissingExamplesNameRule(Rule):
             ),
         ],
         tags=["examples", "naming", "pedantic"],
+        auto_fix=AutoFixCapability.UNSAFE,
     )
 
     def check(self, feature: Any, config: Config) -> list[Diagnostic]:
@@ -355,6 +418,72 @@ class MissingExamplesNameRule(Rule):
                     )
 
         return diagnostics
+
+    def get_fixes(
+        self, feature: Any, config: Config, diagnostics: list[Diagnostic]
+    ) -> list[FixEdit]:
+        from pathlib import Path
+
+        fixes: list[FixEdit] = []
+        file_path = getattr(feature, "file_path", None)
+        if not file_path:
+            location = getattr(feature, "location", None)
+            if location is not None:
+                file_path = getattr(location, "filename", None)
+        if not file_path:
+            return fixes
+
+        try:
+            content = Path(file_path).read_text(encoding="utf-8")
+            lines = content.splitlines(keepends=True)
+        except OSError:
+            return fixes
+
+        diag_lines = {d.line for d in diagnostics if d.rule_id == "BP005"}
+        if not diag_lines:
+            return fixes
+
+        for scenario in feature.all_scenarios():
+            examples = getattr(scenario, "examples", None)
+            if not examples:
+                continue
+
+            for example in examples:
+                name = (getattr(example, "name", "") or "").strip()
+                if name:
+                    continue
+
+                example_line = getattr(example, "line", None)
+                if example_line is None:
+                    loc = getattr(example, "location", None)
+                    if loc is not None:
+                        example_line = getattr(loc, "line", None)
+                if example_line is None or example_line not in diag_lines:
+                    continue
+
+                idx = example_line - 1
+                if idx < 0 or idx >= len(lines):
+                    continue
+
+                old_line = lines[idx]
+                new_text = old_line.rstrip("\n\r") + " Valid values\n"
+                if old_line.endswith("\r\n"):
+                    new_text = old_line.rstrip("\n\r") + " Valid values\r\n"
+
+                fixes.append(
+                    FixEdit(
+                        file_path=file_path,
+                        start_line=example_line,
+                        end_line=example_line,
+                        old_text=old_line,
+                        new_text=new_text,
+                        safety=AutoFixCapability.UNSAFE,
+                        rule_id="BP005",
+                        diagnostic_line=example_line,
+                    )
+                )
+
+        return fixes
 
 
 class MissingFeatureDescriptionRule(Rule):
@@ -401,6 +530,7 @@ class MissingFeatureDescriptionRule(Rule):
             ),
         ],
         tags=["feature", "description", "pedantic"],
+        auto_fix=AutoFixCapability.UNSAFE,
     )
 
     def check(self, feature: Any, config: Config) -> list[Diagnostic]:
@@ -421,6 +551,66 @@ class MissingFeatureDescriptionRule(Rule):
                 )
             ]
         return []
+
+    def get_fixes(
+        self, feature: Any, config: Config, diagnostics: list[Diagnostic]
+    ) -> list[FixEdit]:
+        from pathlib import Path
+
+        fixes: list[FixEdit] = []
+        file_path = getattr(feature, "file_path", None)
+        if not file_path:
+            location = getattr(feature, "location", None)
+            if location is not None:
+                file_path = getattr(location, "filename", None)
+        if not file_path:
+            return fixes
+
+        try:
+            content = Path(file_path).read_text(encoding="utf-8")
+            lines = content.splitlines(keepends=True)
+        except OSError:
+            return fixes
+
+        diag_lines = {d.line for d in diagnostics if d.rule_id == "BP006"}
+        if not diag_lines:
+            return fixes
+
+        feature_line = getattr(feature, "line", None)
+        if feature_line is None:
+            loc = getattr(feature, "location", None)
+            if loc is not None:
+                feature_line = getattr(loc, "line", None)
+        if feature_line is None or feature_line not in diag_lines:
+            return fixes
+
+        idx = feature_line - 1
+        if idx < 0 or idx >= len(lines):
+            return fixes
+
+        old_line = lines[idx]
+        indent = "  "
+        description = (
+            f"{indent}As a [role]\n"
+            f"{indent}I want to [action]\n"
+            f"{indent}So that [benefit]\n"
+        )
+        new_text = old_line + description
+
+        fixes.append(
+            FixEdit(
+                file_path=file_path,
+                start_line=feature_line,
+                end_line=feature_line,
+                old_text=old_line,
+                new_text=new_text,
+                safety=AutoFixCapability.UNSAFE,
+                rule_id="BP006",
+                diagnostic_line=feature_line,
+            )
+        )
+
+        return fixes
 
 
 class ScenarioWithoutAssertionRule(Rule):
