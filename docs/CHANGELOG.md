@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2025-07-03
+
+### Added
+
+- Incremental cache — skip rule execution for unchanged files.
+  SHA-256 content hashing + config hash for automatic invalidation.
+- New `behave_lint.cache` module with `CacheManager`.
+- `--no-cache` and `--clear-cache` CLI flags now functional.
+- `cache_hits` and `cache_misses` populated in `LintSummary`.
+- Documentation: `docs/usage/cache.md`.
+
 ## [1.5.1] - 2025-07-03
 
 ### Added

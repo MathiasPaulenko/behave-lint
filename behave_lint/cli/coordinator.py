@@ -156,7 +156,12 @@ def _run_lint(args: CLIArgs, paths: list[str]) -> int:
     # Run the lint engine
     engine = LintEngine(config, registry)
     want_fix = args.fix or args.unsafe_fixes
-    result = engine.lint(paths, collect_fixes=want_fix)
+    result = engine.lint(
+        paths,
+        collect_fixes=want_fix,
+        use_cache=not args.no_cache,
+        clear_cache=args.clear_cache,
+    )
 
     # Apply auto-fixes if requested
     if want_fix and result.fixes:

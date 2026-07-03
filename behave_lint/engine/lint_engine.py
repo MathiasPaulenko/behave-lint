@@ -13,6 +13,7 @@ See COMPONENT_DESIGN.md C03 and ARCHITECTURE.md Section 6.
 from __future__ import annotations
 
 import time
+from pathlib import Path
 
 from behave_lint.diagnostics.collector import DiagnosticCollector
 from behave_lint.infrastructure.file_discovery import discover_files
@@ -82,6 +83,8 @@ class LintEngine:
         exclude: list[str] | None = None,
         max_workers: int | None = None,
         collect_fixes: bool = False,
+        use_cache: bool = False,
+        clear_cache: bool = False,
     ) -> LintResult:
         """Run the full lint pipeline.
 
@@ -90,6 +93,8 @@ class LintEngine:
             exclude: Glob patterns to exclude.
             max_workers: Thread pool size for rule execution.
             collect_fixes: Whether to also collect auto-fix edits.
+            use_cache: Whether to use incremental cache.
+            clear_cache: Whether to clear the cache before running.
 
         Returns:
             A LintResult with diagnostics, summary, and exit code.
@@ -114,15 +119,46 @@ class LintEngine:
                 exit_code=0,
             )
 
-        # 2. Load features
-        load_result = load_features(file_paths)
+        # 1b. Initialize cache if requested (skip cache when collecting fixes)
+        cache_mgr: CacheManager | None = None
+        if use_cache and self._config.cache and not collect_fixes:
+            from behave_lint.cache.manager import CacheManager
 
-        # 3. Build parse error diagnostics
+            cache_mgr = CacheManager(self._config.cache_dir, self._config)
+            if clear_cache:
+                cache_mgr.clear()
+                cache_mgr = CacheManager(self._config.cache_dir, self._config)
+
+        # 2. Split files into cached and uncached
+        cached_diagnostics: list[Diagnostic] = []
+        uncached_paths: list[str] = []
+        uncached_contents: dict[str, str] = {}
+
+        for fp in file_paths:
+            content = None
+            if cache_mgr is not None:
+                try:
+                    content = Path(fp).read_text(encoding="utf-8")
+                except OSError:
+                    content = None
+                if content is not None:
+                    cached = cache_mgr.get(fp, content)
+                    if cached is not None:
+                        cached_diagnostics.extend(cached)
+                        continue
+            uncached_paths.append(fp)
+            if content is not None:
+                uncached_contents[fp] = content
+
+        # 3. Load features for uncached files only
+        load_result = load_features(uncached_paths)
+
+        # 4. Build parse error diagnostics
         parse_errors: list[Diagnostic] = []
         for file_path, error_msg in load_result.errors:
             parse_errors.append(_make_parse_error_diagnostic(file_path, error_msg))
 
-        # 4. Execute rules
+        # 5. Execute rules on uncached features
         executor = RuleExecutor(self._registry, self._config)
         raw_diagnostics, fixes = executor.execute(
             load_result.features,
@@ -131,15 +167,36 @@ class LintEngine:
             collect_fixes=collect_fixes,
         )
 
-        # 5. Collect and process diagnostics
+        # 6. Store uncached results in cache
+        if cache_mgr is not None:
+            from behave_lint.infrastructure.project_loader import (
+                get_file_path_from_feature,
+            )
+
+            for feature in load_result.features:
+                fp = get_file_path_from_feature(feature)
+                if fp and fp in uncached_contents:
+                    file_diags = [d for d in raw_diagnostics if d.file_path == fp]
+                    cache_mgr.put(fp, uncached_contents[fp], file_diags)
+            # Also cache parse errors
+            for fp, _ in load_result.errors:
+                if fp in uncached_contents:
+                    file_diags = [d for d in parse_errors if d.file_path == fp]
+                    cache_mgr.put(fp, uncached_contents[fp], file_diags)
+            cache_mgr.save()
+
+        # 7. Collect and process diagnostics
         collector = DiagnosticCollector(self._config)
-        all_diagnostics = parse_errors + raw_diagnostics
+        all_diagnostics = parse_errors + raw_diagnostics + cached_diagnostics
         processed = collector.collect_from(all_diagnostics)
 
-        # 6. Build summary
+        # 8. Build summary
         elapsed_ms = (time.perf_counter() - start_time) * 1000.0
         files_with_issues = len({d.file_path for d in processed if d.file_path})
         enabled_count = len(self._registry.get_enabled(self._config))
+
+        cache_hits = cache_mgr.stats.hits if cache_mgr else 0
+        cache_misses = cache_mgr.stats.misses if cache_mgr else 0
 
         summary = LintSummary.from_diagnostics(
             processed,
@@ -147,6 +204,8 @@ class LintEngine:
             files_with_issues=files_with_issues,
             rules_executed=enabled_count,
             duration_ms=elapsed_ms,
+            cache_hits=cache_hits,
+            cache_misses=cache_misses,
         )
 
         result = LintResult(
