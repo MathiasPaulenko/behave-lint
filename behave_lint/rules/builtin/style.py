@@ -226,6 +226,7 @@ class KeywordOrderingRule(Rule):
             ),
         ],
         tags=["steps", "keywords", "ordering"],
+        auto_fix=AutoFixCapability.UNSAFE,
     )
 
     def check(self, feature: Any, config: Config) -> list[Diagnostic]:
@@ -265,6 +266,130 @@ class KeywordOrderingRule(Rule):
                     last_major_keyword = keyword
 
         return diagnostics
+
+    def get_fixes(
+        self, feature: Any, config: Config, diagnostics: list[Diagnostic]
+    ) -> list[FixEdit]:
+        from pathlib import Path
+
+        fixes: list[FixEdit] = []
+        file_path = getattr(feature, "file_path", None)
+        if not file_path:
+            location = getattr(feature, "location", None)
+            if location is not None:
+                file_path = getattr(location, "filename", None)
+        if not file_path:
+            return fixes
+
+        try:
+            content = Path(file_path).read_text(encoding="utf-8")
+            lines = content.splitlines(keepends=True)
+        except OSError:
+            return fixes
+
+        diag_lines = {d.line for d in diagnostics if d.rule_id == "BS002"}
+
+        for scenario in feature.all_scenarios():
+            steps = getattr(scenario, "steps", [])
+            if not steps:
+                continue
+
+            scenario_has_diag = False
+            for step in steps:
+                step_line = getattr(step, "line", None)
+                if step_line is None:
+                    loc = getattr(step, "location", None)
+                    if loc is not None:
+                        step_line = getattr(loc, "line", None)
+                if step_line in diag_lines:
+                    scenario_has_diag = True
+                    break
+            if not scenario_has_diag:
+                continue
+
+            groups: list[list[str]] = []
+            group_keywords: list[str] = []
+            current_group: list[str] = []
+            current_major: str | None = None
+
+            for step in steps:
+                keyword = getattr(step, "keyword", "").strip().lower()
+                step_line = getattr(step, "line", None)
+                if step_line is None:
+                    loc = getattr(step, "location", None)
+                    if loc is not None:
+                        step_line = getattr(loc, "line", None)
+                if step_line is None:
+                    continue
+
+                idx = step_line - 1
+                if idx < 0 or idx >= len(lines):
+                    continue
+
+                line_text = lines[idx]
+
+                if keyword in ("and", "but", "*"):
+                    current_group.append(line_text)
+                elif keyword in _STEP_KEYWORDS_ORDER:
+                    if current_group and current_major is not None:
+                        groups.append(current_group)
+                        group_keywords.append(current_major)
+                    current_group = [line_text]
+                    current_major = keyword
+                else:
+                    current_group.append(line_text)
+
+            if current_group and current_major is not None:
+                groups.append(current_group)
+                group_keywords.append(current_major)
+
+            if len(groups) <= 1:
+                continue
+
+            sorted_pairs = sorted(
+                zip(group_keywords, groups, strict=True),
+                key=lambda pair: _STEP_KEYWORDS_ORDER.index(pair[0]),
+            )
+            reordered = [line for _, grp in sorted_pairs for line in grp]
+
+            first_step_line = getattr(steps[0], "line", None)
+            if first_step_line is None:
+                loc = getattr(steps[0], "location", None)
+                if loc is not None:
+                    first_step_line = getattr(loc, "line", None)
+            last_step = steps[-1]
+            last_step_line = getattr(last_step, "line", None)
+            if last_step_line is None:
+                loc = getattr(last_step, "location", None)
+                if loc is not None:
+                    last_step_line = getattr(loc, "line", None)
+            if first_step_line is None or last_step_line is None:
+                continue
+
+            start_idx = first_step_line - 1
+            end_idx = last_step_line
+            if start_idx < 0 or end_idx > len(lines):
+                continue
+
+            old_text = "".join(lines[start_idx:end_idx])
+            new_text = "".join(reordered)
+            if old_text == new_text:
+                continue
+
+            fixes.append(
+                FixEdit(
+                    file_path=file_path,
+                    start_line=first_step_line,
+                    end_line=last_step_line,
+                    old_text=old_text,
+                    new_text=new_text,
+                    safety=AutoFixCapability.UNSAFE,
+                    rule_id="BS002",
+                    diagnostic_line=first_step_line,
+                )
+            )
+
+        return fixes
 
 
 class StepPhrasingRule(Rule):
@@ -308,6 +433,7 @@ class StepPhrasingRule(Rule):
             ),
         ],
         tags=["steps", "phrasing", "readability"],
+        auto_fix=AutoFixCapability.SAFE,
     )
 
     def check(self, feature: Any, config: Config) -> list[Diagnostic]:
@@ -330,6 +456,73 @@ class StepPhrasingRule(Rule):
                     )
 
         return diagnostics
+
+    def get_fixes(
+        self, feature: Any, config: Config, diagnostics: list[Diagnostic]
+    ) -> list[FixEdit]:
+        from pathlib import Path
+
+        fixes: list[FixEdit] = []
+        file_path = getattr(feature, "file_path", None)
+        if not file_path:
+            location = getattr(feature, "location", None)
+            if location is not None:
+                file_path = getattr(location, "filename", None)
+        if not file_path:
+            return fixes
+
+        try:
+            content = Path(file_path).read_text(encoding="utf-8")
+            lines = content.splitlines(keepends=True)
+        except OSError:
+            return fixes
+
+        diag_lines = {d.line for d in diagnostics if d.rule_id == "BS003"}
+
+        for scenario in feature.all_scenarios():
+            steps = getattr(scenario, "steps", [])
+            for step in steps:
+                text = getattr(step, "name", "").strip()
+                if not (text.startswith("I ") or text.startswith("I've ")):
+                    continue
+
+                step_line = getattr(step, "line", None)
+                if step_line is None:
+                    loc = getattr(step, "location", None)
+                    if loc is not None:
+                        step_line = getattr(loc, "line", None)
+                if step_line is None or step_line not in diag_lines:
+                    continue
+
+                idx = step_line - 1
+                if idx < 0 or idx >= len(lines):
+                    continue
+
+                old_line = lines[idx]
+                new_line = old_line.replace("I've ", "the user has ", 1)
+                if new_line == old_line:
+                    new_line = old_line.replace("I am ", "the user is ", 1)
+                if new_line == old_line:
+                    new_line = old_line.replace("I have ", "the user has ", 1)
+                if new_line == old_line:
+                    new_line = old_line.replace("I ", "the user ", 1)
+                if new_line == old_line:
+                    continue
+
+                fixes.append(
+                    FixEdit(
+                        file_path=file_path,
+                        start_line=step_line,
+                        end_line=step_line,
+                        old_text=old_line,
+                        new_text=new_line,
+                        safety=AutoFixCapability.SAFE,
+                        rule_id="BS003",
+                        diagnostic_line=step_line,
+                    )
+                )
+
+        return fixes
 
 
 class BackgroundNameRule(Rule):
@@ -442,6 +635,7 @@ class FeatureDescriptionFormattingRule(Rule):
             ),
         ],
         tags=["feature", "description", "documentation"],
+        auto_fix=AutoFixCapability.UNSAFE,
     )
 
     def check(self, feature: Any, config: Config) -> list[Diagnostic]:
@@ -461,6 +655,66 @@ class FeatureDescriptionFormattingRule(Rule):
                 )
             ]
         return []
+
+    def get_fixes(
+        self, feature: Any, config: Config, diagnostics: list[Diagnostic]
+    ) -> list[FixEdit]:
+        from pathlib import Path
+
+        fixes: list[FixEdit] = []
+        file_path = getattr(feature, "file_path", None)
+        if not file_path:
+            location = getattr(feature, "location", None)
+            if location is not None:
+                file_path = getattr(location, "filename", None)
+        if not file_path:
+            return fixes
+
+        try:
+            content = Path(file_path).read_text(encoding="utf-8")
+            lines = content.splitlines(keepends=True)
+        except OSError:
+            return fixes
+
+        diag_lines = {d.line for d in diagnostics if d.rule_id == "BS005"}
+        if not diag_lines:
+            return fixes
+
+        feature_line = getattr(feature, "line", None)
+        if feature_line is None:
+            loc = getattr(feature, "location", None)
+            if loc is not None:
+                feature_line = getattr(loc, "line", None)
+        if feature_line is None or feature_line not in diag_lines:
+            return fixes
+
+        idx = feature_line - 1
+        if idx < 0 or idx >= len(lines):
+            return fixes
+
+        old_line = lines[idx]
+        indent = "  "
+        description = (
+            f"{indent}As a [role]\n"
+            f"{indent}I want to [action]\n"
+            f"{indent}So that [benefit]\n"
+        )
+        new_text = old_line + description
+
+        fixes.append(
+            FixEdit(
+                file_path=file_path,
+                start_line=feature_line,
+                end_line=feature_line,
+                old_text=old_line,
+                new_text=new_text,
+                safety=AutoFixCapability.UNSAFE,
+                rule_id="BS005",
+                diagnostic_line=feature_line,
+            )
+        )
+
+        return fixes
 
 
 class StepKeywordCasingRule(Rule):

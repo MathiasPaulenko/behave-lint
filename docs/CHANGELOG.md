@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2025-07-03
+
+### Added
+
+- Auto-fix support for BS002 (keyword ordering) — reorders steps to
+  Given-When-Then order (UNSAFE, requires `--unsafe-fixes`).
+- Auto-fix support for BS003 (step phrasing) — replaces first-person
+  "I" with "the user", handling common conjugations like "I am" →
+  "the user is" and "I've" → "the user has" (SAFE, `--fix`).
+- Auto-fix support for BS005 (feature description) — inserts a
+  template description ("As a [role] / I want to [action] / So that
+  [benefit]") after the Feature line (UNSAFE, requires
+  `--unsafe-fixes`).
+- Updated `auto_fix` metadata for BS002, BS003, and BS005 rules.
+
 ## [1.3.2] - 2025-07-03
 
 ### Fixed
