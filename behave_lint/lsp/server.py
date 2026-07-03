@@ -90,6 +90,52 @@ def _fix_edit_to_text_edit(edit: FixEdit) -> lsp.TextEdit:
     )
 
 
+def _apply_content_changes(
+    content: str,
+    changes: list[lsp.TextDocumentContentChangeEvent],
+) -> str:
+    """Apply incremental content changes to the document text.
+
+    Handles both full-document replacements (no range) and partial
+    range-based changes (TextDocumentContentChangePartial).
+
+    Args:
+        content: The current document content.
+        changes: A list of content change events from didChange.
+
+    Returns:
+        The updated document content.
+    """
+    for change in changes:
+        change_range = getattr(change, "range", None)
+        if change_range is None:
+            content = change.text
+            continue
+
+        lines = content.split("\n")
+        start_line = change_range.start.line
+        start_char = change_range.start.character
+        end_line = change_range.end.line
+        end_char = change_range.end.character
+
+        prefix = "\n".join(lines[:start_line])
+        if start_line < len(lines):
+            if start_line == 0:
+                prefix += lines[0][:start_char]
+            else:
+                prefix += "\n" + lines[start_line][:start_char]
+
+        suffix = ""
+        if end_line < len(lines):
+            suffix = lines[end_line][end_char:]
+            if end_line + 1 < len(lines):
+                suffix += "\n" + "\n".join(lines[end_line + 1 :])
+
+        content = prefix + change.text + suffix
+
+    return content
+
+
 def _build_config_from_workspace() -> Config:
     """Build a Config from workspace settings merged with defaults.
 
@@ -160,7 +206,12 @@ def _lint_content(
     return diagnostics, fixes
 
 
-def _publish_diagnostics(ls: LanguageServer, doc: TextDocument) -> None:
+def _publish_diagnostics(
+    ls: LanguageServer,
+    doc: TextDocument,
+    *,
+    content_override: str | None = None,
+) -> None:
     """Lint a document and publish diagnostics to the client.
 
     Also stores fix edits for later use by codeAction requests.
@@ -168,11 +219,14 @@ def _publish_diagnostics(ls: LanguageServer, doc: TextDocument) -> None:
     Args:
         ls: The language server instance.
         doc: The text document to lint.
+        content_override: If provided, use this content instead of doc.source
+            (used for incremental sync where changes haven't been applied yet).
     """
     if not doc.uri.endswith(".feature"):
         return
 
-    diagnostics, fixes = _lint_content(doc.source, doc.uri)
+    content = content_override if content_override is not None else doc.source
+    diagnostics, fixes = _lint_content(content, doc.uri)
     ls.text_document_publish_diagnostics(
         lsp.PublishDiagnosticsParams(uri=doc.uri, diagnostics=diagnostics)
     )
@@ -191,8 +245,8 @@ def create_server() -> LanguageServer:
     """
     server = LanguageServer(
         name="behave-lint",
-        version="2.2.0",
-        text_document_sync_kind=lsp.TextDocumentSyncKind.Full,
+        version="2.3.0",
+        text_document_sync_kind=lsp.TextDocumentSyncKind.Incremental,
     )
 
     @server.feature(lsp.TEXT_DOCUMENT_DID_OPEN)
@@ -203,9 +257,10 @@ def create_server() -> LanguageServer:
 
     @server.feature(lsp.TEXT_DOCUMENT_DID_CHANGE)
     def did_change(ls: LanguageServer, params: lsp.DidChangeTextDocumentParams) -> None:
-        """Handle textDocument/didChange — re-lint and publish diagnostics."""
+        """Handle textDocument/didChange — apply incremental changes and re-lint."""
         doc = ls.workspace.get_text_document(params.text_document.uri)
-        _publish_diagnostics(ls, doc)
+        updated = _apply_content_changes(doc.source, list(params.content_changes))
+        _publish_diagnostics(ls, doc, content_override=updated)
 
     @server.feature(lsp.TEXT_DOCUMENT_DID_SAVE)
     def did_save(ls: LanguageServer, params: lsp.DidSaveTextDocumentParams) -> None:
@@ -274,6 +329,7 @@ def main() -> None:
 
 
 __all__ = [
+    "_apply_content_changes",
     "_build_config_from_workspace",
     "_fix_edit_to_text_edit",
     "_lint_content",

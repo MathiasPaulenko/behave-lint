@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.0] - 2025-07-03
+
+### Added
+
+- Incremental document sync (`TextDocumentSyncKind.Incremental`) in LSP server — applies partial range-based changes efficiently.
+- `_apply_content_changes` function handles both full-document and partial range-based changes.
+- `content_override` parameter in `_publish_diagnostics` for incremental sync.
+- 7 new tests for incremental sync (full replace, insert at start, replace mid-line, replace entire line, multi-line, insert at end, sequential changes).
+
+### Changed
+
+- `TextDocumentSyncKind` changed from `Full` to `Incremental`.
+- `did_change` handler now applies incremental changes before linting.
+
 ## [2.2.0] - 2025-07-03
 
 ### Added

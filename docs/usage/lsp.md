@@ -67,7 +67,7 @@ Any LSP client that supports stdio transport can connect to
 `behave-lint-lsp`. The server advertises:
 
 - `textDocument/didOpen` — lint on file open
-- `textDocument/didChange` — re-lint on every edit (full sync)
+- `textDocument/didChange` — re-lint on every edit (incremental sync)
 - `textDocument/didSave` — re-lint on save
 - `textDocument/didClose` — clear diagnostics
 - `textDocument/codeAction` — quick fixes for fixable diagnostics
@@ -84,8 +84,10 @@ Any LSP client that supports stdio transport can connect to
   `group`, `severityOverrides`, and `ruleParams` directly from editor
   settings (e.g. VS Code `settings.json`). Changes trigger re-linting of
   all open `.feature` documents.
-- **Full document sync** — the server receives the complete document
-  content on every change
+- **Incremental document sync** — the server applies partial range-based
+  changes efficiently without receiving the full document on every edit
+- **Full document sync** — full-document changes (no range) are also
+  supported for clients that prefer full sync
 - **Source attribution** — all diagnostics are tagged with
   `source: behave-lint`
 - **Rule codes** — each diagnostic includes the rule ID (e.g. `BC001`,
@@ -131,4 +133,4 @@ vim.lsp.config('behave-lint', {
 
 ## Limitations
 
-- Full document sync only (no incremental sync)
+- None currently

@@ -396,3 +396,128 @@ class TestWorkspaceConfig:
         rule_ids = {d.code for d in diags}
         assert rule_ids == {"BS001"}
         _workspace_config.clear()
+
+
+class TestIncrementalSync:
+    """Tests for _apply_content_changes — incremental document sync."""
+
+    def test_full_document_replacement(self) -> None:
+        """Change without range replaces entire content."""
+        from lsprotocol import types as lsp
+
+        from behave_lint.lsp.server import _apply_content_changes
+
+        change = lsp.TextDocumentContentChangeWholeDocument(text="new content")
+        result = _apply_content_changes("old content", [change])
+        assert result == "new content"
+
+    def test_insert_at_start(self) -> None:
+        """Insert text at position (0, 0)."""
+        from lsprotocol import types as lsp
+
+        from behave_lint.lsp.server import _apply_content_changes
+
+        content = "line1\nline2\nline3"
+        change = lsp.TextDocumentContentChangePartial(
+            range=lsp.Range(
+                start=lsp.Position(line=0, character=0),
+                end=lsp.Position(line=0, character=0),
+            ),
+            text="prefix ",
+        )
+        result = _apply_content_changes(content, [change])
+        assert result == "prefix line1\nline2\nline3"
+
+    def test_replace_mid_line(self) -> None:
+        """Replace characters in the middle of a line."""
+        from lsprotocol import types as lsp
+
+        from behave_lint.lsp.server import _apply_content_changes
+
+        content = "line1\nline2\nline3"
+        change = lsp.TextDocumentContentChangePartial(
+            range=lsp.Range(
+                start=lsp.Position(line=1, character=2),
+                end=lsp.Position(line=1, character=4),
+            ),
+            text="XX",
+        )
+        result = _apply_content_changes(content, [change])
+        assert result == "line1\nliXX2\nline3"
+
+    def test_replace_entire_line(self) -> None:
+        """Replace an entire line."""
+        from lsprotocol import types as lsp
+
+        from behave_lint.lsp.server import _apply_content_changes
+
+        content = "line1\nline2\nline3"
+        change = lsp.TextDocumentContentChangePartial(
+            range=lsp.Range(
+                start=lsp.Position(line=0, character=0),
+                end=lsp.Position(line=0, character=5),
+            ),
+            text="replaced",
+        )
+        result = _apply_content_changes(content, [change])
+        assert result == "replaced\nline2\nline3"
+
+    def test_multi_line_replacement(self) -> None:
+        """Replace content spanning multiple lines."""
+        from lsprotocol import types as lsp
+
+        from behave_lint.lsp.server import _apply_content_changes
+
+        content = "line1\nline2\nline3"
+        change = lsp.TextDocumentContentChangePartial(
+            range=lsp.Range(
+                start=lsp.Position(line=0, character=3),
+                end=lsp.Position(line=2, character=2),
+            ),
+            text="X\nY",
+        )
+        result = _apply_content_changes(content, [change])
+        assert result == "linX\nYne3"
+
+    def test_insert_at_end(self) -> None:
+        """Insert text at the end of the document."""
+        from lsprotocol import types as lsp
+
+        from behave_lint.lsp.server import _apply_content_changes
+
+        content = "line1\nline2\nline3"
+        change = lsp.TextDocumentContentChangePartial(
+            range=lsp.Range(
+                start=lsp.Position(line=2, character=5),
+                end=lsp.Position(line=2, character=5),
+            ),
+            text=" suffix",
+        )
+        result = _apply_content_changes(content, [change])
+        assert result == "line1\nline2\nline3 suffix"
+
+    def test_multiple_changes_applied_sequentially(self) -> None:
+        """Multiple changes are applied in order."""
+        from lsprotocol import types as lsp
+
+        from behave_lint.lsp.server import _apply_content_changes
+
+        content = "abc\ndef"
+        changes = [
+            lsp.TextDocumentContentChangePartial(
+                range=lsp.Range(
+                    start=lsp.Position(line=0, character=0),
+                    end=lsp.Position(line=0, character=3),
+                ),
+                text="XYZ",
+            ),
+            lsp.TextDocumentContentChangePartial(
+                range=lsp.Range(
+                    start=lsp.Position(line=1, character=0),
+                    end=lsp.Position(line=1, character=3),
+                ),
+                text="UVW",
+            ),
+        ]
+        result = _apply_content_changes(content, changes)
+        assert result == "XYZ\nUVW"
