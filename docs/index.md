@@ -7,7 +7,8 @@ Behave test suites.
 
 - **41 built-in rules** across 6 categories: correctness, step
   definitions, consistency, complexity, style, and pedantic.
-- **Auto-fix** support for common violations.
+- **Auto-fix** support for 14 rules (safe and unsafe).
+- **Watch mode** — re-lint on file changes with `--watch`.
 - **Multiple output formats**: console, JSON, SARIF, Markdown, GitHub
   Actions annotations.
 - **Plugin system** for custom rules and reporters.
@@ -28,6 +29,7 @@ behave-lint features/
 - [CLI Reference](usage/cli-reference.md)
 - [Configuration](usage/configuration.md)
 - [Auto-Fix](usage/auto-fix.md)
+- [Watch Mode](usage/cli-reference.md#watch-mode)
 - [Output Formats](usage/output-formats.md)
 - [Rules](rules/index.md)
 - [Guides](guides/index.md)

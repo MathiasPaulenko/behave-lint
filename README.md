@@ -1,6 +1,8 @@
 # behave-lint
 
 [![CI](https://github.com/MathiasPaulenko/behave-lint/actions/workflows/ci.yml/badge.svg)](https://github.com/MathiasPaulenko/behave-lint/actions/workflows/ci.yml)
+[![Release](https://github.com/MathiasPaulenko/behave-lint/actions/workflows/release.yml/badge.svg)](https://github.com/MathiasPaulenko/behave-lint/actions/workflows/release.yml)
+[![PyPI](https://img.shields.io/pypi/v/behave-lint.svg)](https://pypi.org/project/behave-lint/)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://docs.astral.sh/ruff/)
@@ -10,8 +12,9 @@
 **behave-lint** statically analyzes your Gherkin feature files for
 correctness, consistency, complexity, and style — without executing a
 single test. It ships with **41 built-in rules** across 6 categories,
-supports **auto-fix** for common violations, and outputs in **5 formats**
-including SARIF for GitHub Code Scanning.
+supports **auto-fix** for 14 rules, and outputs in **5 formats**
+including SARIF for GitHub Code Scanning. Includes **watch mode** for
+real-time feedback during development.
 
 ## Why behave-lint?
 
@@ -35,6 +38,12 @@ Or with [uv](https://docs.astral.sh/uv/):
 uv add behave-lint
 ```
 
+For watch mode, install the optional dependency:
+
+```bash
+pip install behave-lint[watch]
+```
+
 ## Quick start
 
 ```bash
@@ -44,11 +53,14 @@ behave-lint features/
 # Apply safe auto-fixes
 behave-lint features/ --fix
 
+# Watch for changes and re-lint automatically
+behave-lint features/ --watch
+
 # JSON output for CI integration
-behave-lint features/ --json --output-file report.json
+behave-lint features/ --output json --output-file report.json
 
 # SARIF for GitHub Code Scanning
-behave-lint features/ --sarif --output-file results.sarif
+behave-lint features/ --output sarif --output-file results.sarif
 
 # List all available rules
 behave-lint --list-rules
@@ -61,8 +73,10 @@ behave-lint --explain BC001
 
 - **41 built-in rules** across 6 categories: correctness, step
   definitions, consistency, complexity, style, and pedantic.
-- **Auto-fix** — safe, deterministic fixes for common violations
-  (`--fix`). Unsafe fixes require `--unsafe-fixes`.
+- **Auto-fix** — 14 rules with safe and unsafe fixes (`--fix`,
+  `--unsafe-fixes`).
+- **Watch mode** — re-lint on file changes with `--watch` (requires
+  `pip install behave-lint[watch]`).
 - **5 output formats** — console (colored), JSON, SARIF, Markdown, and
   GitHub Actions inline annotations.
 - **Zero-config** — sensible defaults work out of the box. Override
@@ -93,6 +107,12 @@ behave-lint --explain BC001
 | BD004 | Convert `{param}` → `<param>` | Safe |
 | BD005 | Remove trailing punctuation from steps | Safe |
 | BS001 | Convert tags to `snake_case` | Safe |
+| BS005 | Insert missing Feature description template | Unsafe |
+| BP001 | Insert `@smoke` tag on untagged scenarios | Unsafe |
+| BP005 | Append `Valid values` to unnamed Examples | Unsafe |
+| BP006 | Insert As a / I want / So that description | Unsafe |
+
+See the [Auto-Fix guide](docs/usage/auto-fix.md) for the full list.
 
 ## Configuration
 
@@ -218,10 +238,10 @@ uv run pre-commit install
 uv run pytest
 
 # Lint
-uv run ruff check src/ tests/
+uv run ruff check behave_lint/ tests/
 
 # Type check
-uv run mypy src/
+uv run mypy behave_lint/
 
 # Build docs
 uv run mkdocs build --strict

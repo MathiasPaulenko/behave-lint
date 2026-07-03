@@ -17,6 +17,21 @@ pip install behave-lint
 uv add behave-lint
 ```
 
+## Optional: watch mode
+
+Watch mode requires the `watchdog` package. Install it as an optional
+dependency:
+
+```bash
+pip install behave-lint[watch]
+```
+
+Or with uv:
+
+```bash
+uv add 'behave-lint[watch]'
+```
+
 ## Verify installation
 
 ```bash

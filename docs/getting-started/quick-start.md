@@ -57,7 +57,23 @@ Apply safe auto-fixes directly to your feature files:
 behave-lint features/ --fix
 ```
 
+Include unsafe fixes (e.g. inserting placeholder content):
+
+```bash
+behave-lint features/ --fix --unsafe-fixes
+```
+
 See the [Auto-Fix guide](../usage/auto-fix.md) for details.
+
+## Watch mode
+
+Re-lint automatically when feature files change:
+
+```bash
+behave-lint features/ --watch
+```
+
+Requires `watchdog` — install with `pip install behave-lint[watch]`.
 
 ## List available rules
 
@@ -76,4 +92,6 @@ behave-lint --explain BC004
 - [Configuration](../usage/configuration.md) — set up `pyproject.toml`
 - [Output Formats](../usage/output-formats.md) — console, JSON, SARIF, Markdown, GitHub
 - [Rules Overview](../rules/index.md) — browse all 41 built-in rules
+- [Auto-Fix](../usage/auto-fix.md) — 14 auto-fixable rules
+- [Watch Mode](../usage/cli-reference.md#watch-mode) — re-lint on changes
 - [CI/CD Integration](../guides/ci-cd.md) — automate in your pipeline
