@@ -113,12 +113,12 @@ class TestCLIProfileFlag:
         assert result.exit_code == 0
 
     def test_profile_shown_in_help(self) -> None:
-        result = runner.invoke(app, ["--help"])
+        result = runner.invoke(app, ["--help"], color=False)
         assert result.exit_code == 0
         assert "--profile" in result.stdout
 
     def test_help_mentions_profile_options(self) -> None:
-        result = runner.invoke(app, ["--help"])
+        result = runner.invoke(app, ["--help"], color=False)
         assert result.exit_code == 0
         assert "recommended" in result.stdout
         assert "strict" in result.stdout
