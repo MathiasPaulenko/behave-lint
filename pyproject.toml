@@ -65,6 +65,8 @@ dev = [
     "pytest-cov>=5.0",
     "pytest-xdist>=3.5",
     "watchdog>=4.0",
+    "pygls>=2.0",
+    "lsprotocol>=2024.0",
 ]
 docs = [
     "mkdocs>=1.6",
