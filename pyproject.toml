@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "behave-lint"
-version = "1.9.0"
+version = "2.0.0"
 description = "A fast, opinionated, extensible linter for Gherkin .feature files and Behave test suites."
 readme = "README.md"
 license = "MIT"
@@ -53,6 +53,10 @@ dependencies = [
 watch = [
     "watchdog>=4.0",
 ]
+lsp = [
+    "pygls>=2.0",
+    "lsprotocol>=2024.0",
+]
 dev = [
     "ruff>=0.6",
     "mypy>=1.10",
@@ -86,6 +90,7 @@ Changelog = "https://github.com/MathiasPaulenko/behave-lint/blob/main/docs/CHANG
 
 [project.scripts]
 behave-lint = "behave_lint.cli:run"
+behave-lint-lsp = "behave_lint.lsp.server:main"
 
 [project.entry-points."behave_lint.rules"]
 # Built-in rules registered here during M7

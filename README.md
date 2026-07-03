@@ -44,6 +44,12 @@ For watch mode, install the optional dependency:
 pip install behave-lint[watch]
 ```
 
+For LSP support (VS Code, Neovim, Emacs):
+
+```bash
+pip install behave-lint[lsp]
+```
+
 ## Quick start
 
 ```bash
@@ -77,6 +83,8 @@ behave-lint --explain BC001
   `--unsafe-fixes`).
 - **Watch mode** — re-lint on file changes with `--watch` (requires
   `pip install behave-lint[watch]`).
+- **LSP server** — real-time diagnostics in VS Code, Neovim, Emacs
+  (requires `pip install behave-lint[lsp]`).
 - **5 output formats** — console (colored), JSON, SARIF, Markdown, and
   GitHub Actions inline annotations.
 - **Zero-config** — sensible defaults work out of the box. Override
@@ -197,6 +205,8 @@ Runnable example projects in the [`examples/`](examples/) directory:
 - [Configuration](docs/usage/configuration.md)
 - [Output Formats](docs/usage/output-formats.md)
 - [Auto-Fix](docs/usage/auto-fix.md)
+- [Watch Mode](docs/usage/cli-reference.md#watch-mode)
+- [LSP Server](docs/usage/lsp.md)
 
 ### Rules
 

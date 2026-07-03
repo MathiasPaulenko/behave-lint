@@ -47,6 +47,7 @@ nav:
       - Auto-Fix: usage/auto-fix.md
       - Rule Groups: usage/groups.md
       - Incremental Cache: usage/cache.md
+      - LSP Server: usage/lsp.md
   - Rules:
       - Overview: rules/index.md
       - Correctness (BC): rules/correctness.md

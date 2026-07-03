@@ -32,6 +32,23 @@ Or with uv:
 uv add 'behave-lint[watch]'
 ```
 
+## Optional: LSP server
+
+The LSP server provides real-time diagnostics in VS Code, Neovim, and
+other LSP-compatible editors. Install with:
+
+```bash
+pip install behave-lint[lsp]
+```
+
+Or with uv:
+
+```bash
+uv add 'behave-lint[lsp]'
+```
+
+See the [LSP Server guide](../usage/lsp.md) for editor configuration.
+
 ## Verify installation
 
 ```bash

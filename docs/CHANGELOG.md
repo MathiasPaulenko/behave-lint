@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2025-07-03
+
+### Added
+
+- LSP server (`behave-lint-lsp`) for real-time diagnostics in VS Code, Neovim, Emacs.
+- `pygls` and `lsprotocol` as optional dependencies (`pip install behave-lint[lsp]`).
+- `behave-lint-lsp` entry point for stdio LSP transport.
+- Full document sync (`textDocument/didOpen`, `didChange`, `didSave`, `didClose`).
+- Severity mapping from behave-lint to LSP DiagnosticSeverity.
+- 13 tests for LSP server (diagnostic conversion, content linting, server creation, publish).
+- LSP documentation with VS Code, Neovim, and Emacs configuration examples.
+
+### Changed
+
+- Bumped GitHub Actions: `actions/checkout` v4 → v7, `actions/upload-artifact` v4 → v7,
+  `actions/upload-pages-artifact` v3 → v5, `softprops/action-gh-release` v2 → v3.
+
 ## [1.9.0] - 2025-07-03
 
 ### Added

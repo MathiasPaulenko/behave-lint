@@ -9,6 +9,7 @@ Behave test suites.
   definitions, consistency, complexity, style, and pedantic.
 - **Auto-fix** support for 14 rules (safe and unsafe).
 - **Watch mode** — re-lint on file changes with `--watch`.
+- **LSP server** — real-time diagnostics in any LSP-compatible editor.
 - **Multiple output formats**: console, JSON, SARIF, Markdown, GitHub
   Actions annotations.
 - **Plugin system** for custom rules and reporters.
@@ -30,6 +31,7 @@ behave-lint features/
 - [Configuration](usage/configuration.md)
 - [Auto-Fix](usage/auto-fix.md)
 - [Watch Mode](usage/cli-reference.md#watch-mode)
+- [LSP Server](usage/lsp.md)
 - [Output Formats](usage/output-formats.md)
 - [Rules](rules/index.md)
 - [Guides](guides/index.md)
