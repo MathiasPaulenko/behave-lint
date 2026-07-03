@@ -5,8 +5,9 @@ Behave test suites.
 
 ## Features
 
-- **41 built-in rules** across 6 categories: correctness, step
-  definitions, consistency, complexity, style, and pedantic.
+- **50 built-in rules** across 9 categories: correctness, step
+  definitions, consistency, complexity, style, pedantic, security,
+  i18n, and accessibility.
 - **Auto-fix** support for 14 rules (safe and unsafe).
 - **Watch mode** — re-lint on file changes with `--watch`.
 - **LSP server** — real-time diagnostics in any LSP-compatible editor.

@@ -7,8 +7,8 @@ Profiles are predefined rule sets that make it easy to configure
 
 | Profile | Description | Rules enabled |
 |---------|-------------|---------------|
-| `recommended` | All rules except pedantic (BP). Good default for most projects. | 34 rules (BC, BD, BK, BX, BS) |
-| `strict` | All rules including pedantic. Maximum enforcement. | 41 rules (all) |
+| `recommended` | All rules except pedantic (BP). Good default for most projects. | 43 rules (BC, BD, BK, BX, BS, BSEC, BI18N, BACC) |
+| `strict` | All rules including pedantic. Maximum enforcement. | 50 rules (all) |
 | `minimal` | Only correctness and step-definition rules. Catches real bugs only. | 15 rules (BC, BD) |
 
 ## Usage

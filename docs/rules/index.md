@@ -1,6 +1,6 @@
 # Rules Reference
 
-`behave-lint` ships with **41 built-in rules** across 6 categories.
+`behave-lint` ships with **50 built-in rules** across 9 categories.
 
 ## Categories
 
@@ -12,6 +12,9 @@
 | BX | [Complexity](complexity.md) | WARNING | 6 |
 | BS | [Style](style.md) | WARNING | 8 |
 | BP | [Pedantic](pedantic.md) | INFO | 7 |
+| BSEC | [Security](security.md) | ERROR/WARNING | 3 |
+| BI18N | [I18N](i18n.md) | WARNING/INFO | 3 |
+| BACC | [Accessibility](accessibility.md) | WARNING | 3 |
 
 ## Auto-fixable rules
 
@@ -29,7 +32,7 @@ See the [Auto-Fix guide](../usage/auto-fix.md) for details.
 
 ## Rule IDs
 
-Rule IDs use a two-letter prefix followed by a three-digit number:
+Rule IDs use a prefix followed by a three-digit number:
 
 - **BC** — Correctness (definitively wrong structures)
 - **BD** — Step Definitions (step pattern issues)
@@ -37,3 +40,6 @@ Rule IDs use a two-letter prefix followed by a three-digit number:
 - **BX** — Complexity (overly complex features)
 - **BS** — Style (style and convention)
 - **BP** — Pedantic (strict best practices)
+- **BSEC** — Security (sensitive data and credentials)
+- **BI18N** — I18N (internationalization issues)
+- **BACC** — Accessibility (inclusive design and accessibility)

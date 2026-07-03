@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.0] - 2025-07-04
+
+### Added
+
+- **Security category** (`BSEC`): 3 new rules — `BSEC001` hardcoded secrets, `BSEC002` URL with embedded credentials, `BSEC003` sensitive tags.
+- **Internationalization category** (`BI18N`): 3 new rules — `BI18N001` hardcoded date/time formats, `BI18N002` hardcoded currency symbols, `BI18N003` non-ASCII step text.
+- **Accessibility category** (`BACC`): 3 new rules — `BACC001` ableist language, `BACC002` missing accessibility scenarios for UI features, `BACC003` color-only information.
+- New `Category` enum members: `SECURITY`, `I18N`, `ACCESSIBILITY`.
+- New category groups: `security`, `i18n`, `accessibility`.
+- 39 new tests for the 9 new rules.
+- Rule ID validation pattern updated to support alphanumeric prefixes (e.g., `BI18N`).
+
+### Changed
+
+- Total built-in rules: 50 (was 41).
+- Category execution order updated to include new categories.
+
 ## [2.3.0] - 2025-07-03
 
 ### Added

@@ -75,7 +75,7 @@ Any LSP client that supports stdio transport can connect to
 
 ## Features
 
-- **Real-time diagnostics** — errors, warnings, and info from all 41
+- **Real-time diagnostics** — errors, warnings, and info from all 50
   built-in rules
 - **Quick fixes** — `textDocument/codeAction` returns `QuickFix` actions
   with `TextEdit`s for all 14 auto-fixable rules. Click the lightbulb in

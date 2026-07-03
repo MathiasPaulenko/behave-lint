@@ -4,10 +4,12 @@ This document summarizes the implementation roadmap.
 
 ## Current Status
 
-**Stable** — v1.9.0 released. 41 built-in rules, auto-fix (14 rules),
-profiles, groups, incremental cache, cookiecutter plugin template,
-watch mode, plugins, reporters, Typer-based CLI, and full documentation.
-Available on PyPI.
+**Stable** — v2.4.0 released. 50 built-in rules across 9 categories
+(correctness, style, complexity, consistency, pedantic, step definitions,
+security, i18n, accessibility), auto-fix (14 rules), profiles, groups,
+incremental cache, cookiecutter plugin template, watch mode, plugins,
+reporters, Typer-based CLI, LSP server with diagnostics, quick fixes,
+workspace config, and incremental sync. Available on PyPI.
 
 ## Milestones
 
@@ -31,6 +33,9 @@ Available on PyPI.
 | M16 | Cookiecutter Plugin Template | Complete | 1.7.0 |
 | M17 | Pedantic Auto-Fixes | Complete | 1.8.0 |
 | M18 | Watch Mode | Complete | 1.9.0 |
+| M19 | LSP Server | Complete | 2.0.0 |
+| M20 | LSP Quick Fixes & Workspace Config | Complete | 2.1.0–2.3.0 |
+| M21 | New Rule Categories (Security, I18N, Accessibility) | Complete | 2.4.0 |
 
 ## Critical Path
 
@@ -52,6 +57,11 @@ M1 → M2 → M6 → M7 → M10 → M12
 - v1.5+: More auto-fixes, incremental cache.
 - v1.7+: Cookiecutter plugin template.
 - v2.0+: LSP server, IDE extensions, watch mode, new categories.
+  - v2.0.0: LSP server with real-time diagnostics.
+  - v2.1.0: LSP codeAction quick fixes.
+  - v2.2.0: LSP workspace configuration.
+  - v2.3.0: LSP incremental document sync.
+  - v2.4.0: Security, I18N, Accessibility rule categories (9 new rules).
 - v3.0+: AI rule suggestions, rule marketplace, cloud rules.
 - v4.0+: Industry packs, compliance packs.
 - v5.0+: Certification packs, cross-runner support, AI rule engine.

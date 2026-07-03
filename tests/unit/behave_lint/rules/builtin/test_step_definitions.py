@@ -231,7 +231,7 @@ class TestRegisterBuiltinsWithStepDefinitions:
 
         registry = RuleRegistry()
         register_builtins(registry)
-        assert len(registry) == 41
+        assert len(registry) == 50
         assert "BD001" in registry
         assert "BD002" in registry
         assert "BD003" in registry

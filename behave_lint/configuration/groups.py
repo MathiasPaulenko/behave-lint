@@ -23,6 +23,9 @@ Built-in groups (category-based):
 - ``pedantic`` — all BP rules (strict best practices, opt-in).
 - ``step-definitions`` — all BD rules (cross-reference with step defs).
 - ``consistency`` — all BK rules (cross-file consistency).
+- ``security`` — all BSEC rules (security and sensitive data).
+- ``i18n`` — all BI18N rules (internationalization).
+- ``accessibility`` — all BACC rules (accessibility and inclusive design).
 
 Built-in groups (tag-based):
 - ``naming`` — rules related to naming conventions.
@@ -47,6 +50,9 @@ GROUP_STYLE = "style"
 GROUP_PEDANTIC = "pedantic"
 GROUP_STEP_DEFINITIONS = "step-definitions"
 GROUP_CONSISTENCY = "consistency"
+GROUP_SECURITY = "security"
+GROUP_I18N = "i18n"
+GROUP_ACCESSIBILITY = "accessibility"
 
 # Tag-based group names
 GROUP_NAMING = "naming"
@@ -67,6 +73,9 @@ _CATEGORY_PREFIXES: dict[str, str] = {
     GROUP_PEDANTIC: "BP",
     GROUP_STEP_DEFINITIONS: "BD",
     GROUP_CONSISTENCY: "BK",
+    GROUP_SECURITY: "BSEC",
+    GROUP_I18N: "BI18N",
+    GROUP_ACCESSIBILITY: "BACC",
 }
 
 # Tag-based group definitions (group name -> set of tags that match)
@@ -176,6 +185,7 @@ def parse_groups(value: str | list[str]) -> list[str]:
 
 
 __all__ = [
+    "GROUP_ACCESSIBILITY",
     "GROUP_BACKGROUND",
     "GROUP_CONSISTENCY",
     "GROUP_CORRECTNESS",
@@ -183,10 +193,12 @@ __all__ = [
     "GROUP_DOCUMENTATION",
     "GROUP_EXAMPLES",
     "GROUP_FORMATTING",
+    "GROUP_I18N",
     "GROUP_NAMING",
     "GROUP_PEDANTIC",
     "GROUP_READABILITY",
     "GROUP_SCENARIOS",
+    "GROUP_SECURITY",
     "GROUP_STEPS",
     "GROUP_STEP_DEFINITIONS",
     "GROUP_STYLE",

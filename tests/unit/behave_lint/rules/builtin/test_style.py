@@ -281,7 +281,7 @@ class TestRegisterBuiltinsWithStyle:
 
         registry = RuleRegistry()
         register_builtins(registry)
-        assert len(registry) == 41
+        assert len(registry) == 50
         assert "BS001" in registry
         assert "BS002" in registry
         assert "BS003" in registry

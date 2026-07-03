@@ -25,6 +25,9 @@ _CATEGORY_ORDER: dict[Category, int] = {
     Category.CONSISTENCY: 3,
     Category.STEP_DEFINITIONS: 4,
     Category.PEDANTIC: 5,
+    Category.SECURITY: 6,
+    Category.I18N: 7,
+    Category.ACCESSIBILITY: 8,
 }
 
 

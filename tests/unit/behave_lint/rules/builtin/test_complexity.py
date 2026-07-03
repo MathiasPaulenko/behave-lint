@@ -273,7 +273,7 @@ class TestRegisterBuiltinsWithComplexity:
 
         registry = RuleRegistry()
         register_builtins(registry)
-        assert len(registry) == 41
+        assert len(registry) == 50
         assert "BX001" in registry
         assert "BX002" in registry
         assert "BX003" in registry

@@ -91,7 +91,7 @@ behave-lint --explain BC004
 
 - [Configuration](../usage/configuration.md) — set up `pyproject.toml`
 - [Output Formats](../usage/output-formats.md) — console, JSON, SARIF, Markdown, GitHub
-- [Rules Overview](../rules/index.md) — browse all 41 built-in rules
+- [Rules Overview](../rules/index.md) — browse all 50 built-in rules
 - [Auto-Fix](../usage/auto-fix.md) — 14 auto-fixable rules
 - [Watch Mode](../usage/cli-reference.md#watch-mode) — re-lint on changes
 - [CI/CD Integration](../guides/ci-cd.md) — automate in your pipeline

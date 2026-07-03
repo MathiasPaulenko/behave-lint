@@ -57,6 +57,9 @@ class Category(Enum):
         CONSISTENCY: Cross-file consistency.
         PEDANTIC: Strict best practices (opt-in).
         STEP_DEFINITIONS: Cross-reference with step defs.
+        SECURITY: Security and sensitive data concerns.
+        I18N: Internationalization issues.
+        ACCESSIBILITY: Accessibility and inclusive design.
     """
 
     CORRECTNESS = "correctness"
@@ -65,6 +68,9 @@ class Category(Enum):
     CONSISTENCY = "consistency"
     PEDANTIC = "pedantic"
     STEP_DEFINITIONS = "step_definitions"
+    SECURITY = "security"
+    I18N = "i18n"
+    ACCESSIBILITY = "accessibility"
 
     @property
     def code(self) -> str:
@@ -194,6 +200,9 @@ _CATEGORY_CODES: dict[Category, str] = {
     Category.CONSISTENCY: "K",
     Category.PEDANTIC: "P",
     Category.STEP_DEFINITIONS: "D",
+    Category.SECURITY: "SEC",
+    Category.I18N: "I18N",
+    Category.ACCESSIBILITY: "ACC",
 }
 
 _CATEGORY_DEFAULT_SEVERITY: dict[Category, Severity] = {
@@ -203,6 +212,9 @@ _CATEGORY_DEFAULT_SEVERITY: dict[Category, Severity] = {
     Category.CONSISTENCY: Severity.WARNING,
     Category.PEDANTIC: Severity.OFF,
     Category.STEP_DEFINITIONS: Severity.WARNING,
+    Category.SECURITY: Severity.ERROR,
+    Category.I18N: Severity.WARNING,
+    Category.ACCESSIBILITY: Severity.WARNING,
 }
 
 

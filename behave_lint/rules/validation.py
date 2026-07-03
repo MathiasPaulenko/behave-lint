@@ -14,7 +14,7 @@ import warnings
 from behave_lint.models.enums import Category, Severity
 from behave_lint.models.rule_metadata import RuleMetadata
 
-_RULE_ID_PATTERN = re.compile(r"^[A-Z]{2,5}\d{3}$")
+_RULE_ID_PATTERN = re.compile(r"^[A-Z][A-Z0-9]{1,6}\d{3}$")
 _KEBAB_CASE_PATTERN = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
 _SEMVER_PATTERN = re.compile(r"^\d+\.\d+\.\d+")
 

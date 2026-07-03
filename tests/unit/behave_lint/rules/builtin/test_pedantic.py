@@ -208,7 +208,7 @@ class TestRegisterBuiltinsWithPedantic:
 
         registry = RuleRegistry()
         register_builtins(registry)
-        assert len(registry) == 41
+        assert len(registry) == 50
         assert "BP001" in registry
         assert "BP002" in registry
         assert "BP003" in registry

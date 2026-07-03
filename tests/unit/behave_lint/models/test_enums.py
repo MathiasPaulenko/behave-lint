@@ -92,7 +92,7 @@ class TestCategory:
             Category.from_code("Z")
 
     def test_member_count(self) -> None:
-        assert len(list(Category)) == 6
+        assert len(list(Category)) == 9
 
 
 class TestAutoFixCapability:

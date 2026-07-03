@@ -354,7 +354,7 @@ class TestRegisterBuiltins:
 
         registry = RuleRegistry()
         register_builtins(registry)
-        assert len(registry) == 41
+        assert len(registry) == 50
         assert "BC001" in registry
         assert "BC002" in registry
         assert "BC003" in registry
@@ -372,7 +372,7 @@ class TestRegisterBuiltins:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             register_builtins(registry)
-        assert len(registry) == 41
+        assert len(registry) == 50
 
 
 class TestEmptyScenarioRule:

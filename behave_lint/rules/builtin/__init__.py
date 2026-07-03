@@ -6,6 +6,11 @@ category (per RULE_TAXONOMY.md). Each category gets its own module.
 
 from __future__ import annotations
 
+from behave_lint.rules.builtin.accessibility import (
+    AbleistLanguageRule,
+    ColorOnlyContrastRule,
+    MissingAccessibilityScenarioRule,
+)
 from behave_lint.rules.builtin.complexity import (
     FeatureFileTooLongRule,
     LongStepTextRule,
@@ -33,6 +38,11 @@ from behave_lint.rules.builtin.correctness import (
     UndefinedOutlinePlaceholderRule,
     UnusedOutlinePlaceholderRule,
 )
+from behave_lint.rules.builtin.i18n import (
+    HardcodedCurrencyRule,
+    HardcodedDateFormatRule,
+    NonAsciiStepTextRule,
+)
 from behave_lint.rules.builtin.pedantic import (
     MissingBackgroundRule,
     MissingExamplesNameRule,
@@ -41,6 +51,11 @@ from behave_lint.rules.builtin.pedantic import (
     ScenarioWithoutAssertionRule,
     ShortFeatureNameRule,
     ShortScenarioNameRule,
+)
+from behave_lint.rules.builtin.security import (
+    HardcodedSecretsRule,
+    SensitiveTagRule,
+    UrlWithCredentialsRule,
 )
 from behave_lint.rules.builtin.step_definitions import (
     AmbiguousStepPatternRule,
@@ -103,6 +118,15 @@ _BUILTIN_RULES: list[type] = [
     UnusedStepDefinitionRule,
     StepParameterConventionRule,
     StepTrailingPunctuationRule,
+    HardcodedSecretsRule,
+    UrlWithCredentialsRule,
+    SensitiveTagRule,
+    HardcodedDateFormatRule,
+    HardcodedCurrencyRule,
+    NonAsciiStepTextRule,
+    AbleistLanguageRule,
+    MissingAccessibilityScenarioRule,
+    ColorOnlyContrastRule,
 ]
 
 
@@ -117,8 +141,10 @@ def register_builtins(registry: RuleRegistry) -> None:
 
 
 __all__ = [
+    "AbleistLanguageRule",
     "AmbiguousStepPatternRule",
     "BackgroundNameRule",
+    "ColorOnlyContrastRule",
     "DuplicateExamplesNameRule",
     "DuplicateFeatureNamesRule",
     "DuplicateScenarioNamesRule",
@@ -127,6 +153,9 @@ __all__ = [
     "EmptyScenarioRule",
     "FeatureDescriptionFormattingRule",
     "FeatureFileTooLongRule",
+    "HardcodedCurrencyRule",
+    "HardcodedDateFormatRule",
+    "HardcodedSecretsRule",
     "InconsistentNamingConventionRule",
     "InconsistentScenarioLengthRule",
     "InconsistentStepTextRule",
@@ -135,12 +164,15 @@ __all__ = [
     "InvalidTagSyntaxRule",
     "KeywordOrderingRule",
     "LongStepTextRule",
+    "MissingAccessibilityScenarioRule",
     "MissingBackgroundRule",
     "MissingExamplesNameRule",
     "MissingFeatureDescriptionRule",
     "MissingScenarioTagsRule",
+    "NonAsciiStepTextRule",
     "ScenarioOutlineWithoutExamplesRule",
     "ScenarioWithoutAssertionRule",
+    "SensitiveTagRule",
     "ShortFeatureNameRule",
     "ShortScenarioNameRule",
     "StepKeywordCasingRule",
@@ -158,5 +190,6 @@ __all__ = [
     "UndefinedStepPatternRule",
     "UnusedOutlinePlaceholderRule",
     "UnusedStepDefinitionRule",
+    "UrlWithCredentialsRule",
     "register_builtins",
 ]
