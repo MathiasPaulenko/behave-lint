@@ -23,7 +23,7 @@ def validate_metadata(metadata: RuleMetadata) -> bool:
     """Validate rule metadata at registration time.
 
     Checks:
-    - rule_id: Non-empty, matches naming convention (e.g., BC001).
+    - rule_id: Non-empty, matches naming convention (e.g., BC001, BSEC001, BI18N001).
     - name: Non-empty, kebab-case.
     - description: Non-empty.
     - category: Valid Category enum member.

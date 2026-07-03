@@ -56,6 +56,9 @@ nav:
       - Complexity (BX): rules/complexity.md
       - Style (BS): rules/style.md
       - Pedantic (BP): rules/pedantic.md
+      - Security (BSEC): rules/security.md
+      - I18N (BI18N): rules/i18n.md
+      - Accessibility (BACC): rules/accessibility.md
   - Guides:
       - Overview: guides/index.md
       - CI/CD Integration: guides/ci-cd.md

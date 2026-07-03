@@ -74,10 +74,10 @@ class Category(Enum):
 
     @property
     def code(self) -> str:
-        """Single-letter category code used in rule IDs.
+        """Category code used in rule IDs.
 
         Returns:
-            The category code: C, S, X, K, P, or D.
+            The category code: C, S, X, K, P, D, SEC, I18N, or ACC.
         """
         return _CATEGORY_CODES[self]
 
@@ -112,10 +112,10 @@ class Category(Enum):
 
     @classmethod
     def from_code(cls, code: str) -> Category:
-        """Parse a single-letter code into a Category member.
+        """Parse a category code into a Category member.
 
         Args:
-            code: Single uppercase letter (C, S, X, K, P, D).
+            code: Category code (C, S, X, K, P, D, SEC, I18N, ACC).
 
         Returns:
             The matching Category member.
