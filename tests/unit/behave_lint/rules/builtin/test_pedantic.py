@@ -238,9 +238,7 @@ class TestMissingFeatureDescriptionRule:
     def test_diagnostic_when_description_missing(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            "Feature: Test\n\n"
-            "  Scenario: Test\n"
-            "    Given a step\n",
+            "Feature: Test\n\n  Scenario: Test\n    Given a step\n",
         )
         rule = MissingFeatureDescriptionRule()
         diags = rule.check(feature, Config())

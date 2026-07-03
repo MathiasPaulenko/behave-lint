@@ -410,9 +410,7 @@ class MissingFeatureDescriptionRule(Rule):
             file_path = getattr(location, "filename", "") if location else ""
             return [
                 self.diagnostic(
-                    message=(
-                        f"Feature '{feature.name}' has no description"
-                    ),
+                    message=(f"Feature '{feature.name}' has no description"),
                     node=feature,
                     file_path=file_path or None,
                     suggestion=(
@@ -453,9 +451,7 @@ class ScenarioWithoutAssertionRule(Rule):
         examples=[
             RuleExample(
                 before=(
-                    "  Scenario: Setup only\n"
-                    "    Given a user\n"
-                    "    When I log in\n"
+                    "  Scenario: Setup only\n    Given a user\n    When I log in\n"
                 ),
                 after=(
                     "  Scenario: Login succeeds\n"
@@ -486,9 +482,7 @@ class ScenarioWithoutAssertionRule(Rule):
             if not has_assertion and steps:
                 diagnostics.append(
                     self.diagnostic(
-                        message=(
-                            f"Scenario '{scenario.name}' has no 'Then' step"
-                        ),
+                        message=(f"Scenario '{scenario.name}' has no 'Then' step"),
                         node=scenario,
                         suggestion=(
                             "Add a 'Then' step to verify the expected "

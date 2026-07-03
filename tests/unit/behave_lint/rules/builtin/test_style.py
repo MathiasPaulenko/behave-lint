@@ -329,9 +329,7 @@ class TestTrailingWhitespaceRule:
     def test_no_diagnostic_when_no_trailing_whitespace(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            "Feature: Test\n\n"
-            "  Scenario: Test\n"
-            "    Given a step\n",
+            "Feature: Test\n\n  Scenario: Test\n    Given a step\n",
         )
         rule = TrailingWhitespaceRule()
         diags = rule.check(feature, Config())
@@ -354,9 +352,7 @@ class TestTabIndentationRule:
     def test_no_diagnostic_when_spaces_used(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            "Feature: Test\n\n"
-            "  Scenario: Test\n"
-            "    Given a step\n",
+            "Feature: Test\n\n  Scenario: Test\n    Given a step\n",
         )
         rule = TabIndentationRule()
         diags = rule.check(feature, Config())
@@ -365,9 +361,7 @@ class TestTabIndentationRule:
     def test_diagnostic_when_tabs_used(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            "Feature: Test\n"
-            "\tScenario: A\n"
-            "\t\tGiven a step\n",
+            "Feature: Test\n\tScenario: A\n\t\tGiven a step\n",
         )
         rule = TabIndentationRule()
         diags = rule.check(feature, Config())

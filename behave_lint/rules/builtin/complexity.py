@@ -517,8 +517,7 @@ class FeatureFileTooLongRule(Rule):
                     node=feature,
                     file_path=file_path,
                     suggestion=(
-                        "Split this feature file into smaller, "
-                        "focused feature files."
+                        "Split this feature file into smaller, focused feature files."
                     ),
                 )
             ]

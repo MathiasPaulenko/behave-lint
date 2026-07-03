@@ -542,15 +542,13 @@ class StepKeywordCasingRule(Rule):
                         diagnostics.append(
                             self.diagnostic(
                                 message=(
-                                    f"Step keyword '{actual}' should be "
-                                    f"'{correct}'"
+                                    f"Step keyword '{actual}' should be '{correct}'"
                                 ),
                                 node=feature,
                                 file_path=file_path,
                                 line=i,
                                 suggestion=(
-                                    "Capitalize the first letter of "
-                                    "the step keyword."
+                                    "Capitalize the first letter of the step keyword."
                                 ),
                             )
                         )
@@ -664,9 +662,7 @@ class TrailingWhitespaceRule(Rule):
             if stripped != stripped.rstrip():
                 diagnostics.append(
                     self.diagnostic(
-                        message=(
-                            f"Line {i} has trailing whitespace"
-                        ),
+                        message=(f"Line {i} has trailing whitespace"),
                         node=feature,
                         file_path=file_path,
                         line=i,
@@ -702,7 +698,7 @@ class TrailingWhitespaceRule(Rule):
             if i not in diag_lines:
                 continue
             stripped = line.rstrip("\r\n")
-            trailing = line[len(stripped):]
+            trailing = line[len(stripped) :]
             new_line = stripped.rstrip() + trailing
             if new_line != line:
                 fixes.append(
@@ -746,16 +742,8 @@ class TabIndentationRule(Rule):
         since="1.2.0",
         examples=[
             RuleExample(
-                before=(
-                    "Feature: Test\n"
-                    "\tScenario: A\n"
-                    "\t\tGiven a step\n"
-                ),
-                after=(
-                    "Feature: Test\n"
-                    "  Scenario: A\n"
-                    "    Given a step\n"
-                ),
+                before=("Feature: Test\n\tScenario: A\n\t\tGiven a step\n"),
+                after=("Feature: Test\n  Scenario: A\n    Given a step\n"),
                 description="Replace tabs with spaces (2 per level).",
             ),
         ],
@@ -786,15 +774,12 @@ class TabIndentationRule(Rule):
             if self._TAB_RE.match(line):
                 diagnostics.append(
                     self.diagnostic(
-                        message=(
-                            f"Line {i} uses tabs for indentation"
-                        ),
+                        message=(f"Line {i} uses tabs for indentation"),
                         node=feature,
                         file_path=file_path,
                         line=i,
                         suggestion=(
-                            "Replace tabs with spaces (2 spaces per "
-                            "indentation level)."
+                            "Replace tabs with spaces (2 spaces per indentation level)."
                         ),
                     )
                 )
@@ -831,7 +816,7 @@ class TabIndentationRule(Rule):
                 continue
             tabs = match.group()
             spaces = "  " * len(tabs)
-            new_line = spaces + line[len(tabs):]
+            new_line = spaces + line[len(tabs) :]
             fixes.append(
                 FixEdit(
                     file_path=file_path,

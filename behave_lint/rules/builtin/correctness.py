@@ -631,9 +631,7 @@ class EmptyScenarioRule(Rule):
                     "    Given a step\n"
                 ),
                 after=(
-                    "Feature: Test\n\n"
-                    "  Scenario: Real scenario\n"
-                    "    Given a step\n"
+                    "Feature: Test\n\n  Scenario: Real scenario\n    Given a step\n"
                 ),
                 description="Remove the empty scenario or add steps to it.",
             ),
@@ -649,9 +647,7 @@ class EmptyScenarioRule(Rule):
             if not steps:
                 diagnostics.append(
                     self.diagnostic(
-                        message=(
-                            f"Scenario '{scenario.name}' has no steps"
-                        ),
+                        message=(f"Scenario '{scenario.name}' has no steps"),
                         node=scenario,
                         suggestion=(
                             "Add steps to this scenario or remove it "
@@ -718,9 +714,7 @@ class UnusedOutlinePlaceholderRule(Rule):
                 continue
 
             steps = getattr(scenario, "steps", [])
-            step_text = " ".join(
-                getattr(s, "name", "") for s in steps
-            )
+            step_text = " ".join(getattr(s, "name", "") for s in steps)
 
             for example in examples:
                 table = getattr(example, "table", None)

@@ -288,9 +288,7 @@ class TestFeatureFileTooLongRule:
     def test_no_diagnostic_when_file_short(self, tmp_path: Path) -> None:
         feature = _load_feature(
             tmp_path,
-            "Feature: Test\n\n"
-            "  Scenario: Test\n"
-            "    Given a step\n",
+            "Feature: Test\n\n  Scenario: Test\n    Given a step\n",
         )
         rule = FeatureFileTooLongRule()
         diags = rule.check(feature, Config())
