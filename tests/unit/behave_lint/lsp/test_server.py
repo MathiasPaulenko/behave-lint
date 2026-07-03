@@ -131,7 +131,9 @@ class TestLintContent:
         """Valid feature content should produce no error diagnostics."""
         from behave_lint.lsp.server import _lint_content
 
-        diagnostics = _lint_content(valid_feature_content, "file:///test.feature")
+        diagnostics, _fixes = _lint_content(
+            valid_feature_content, "file:///test.feature"
+        )
         error_diags = [d for d in diagnostics if d.severity == 1]  # Error
         assert error_diags == []
 
@@ -141,7 +143,9 @@ class TestLintContent:
         """Invalid feature content should produce parse error diagnostics."""
         from behave_lint.lsp.server import _lint_content
 
-        diagnostics = _lint_content(invalid_feature_content, "file:///test.feature")
+        diagnostics, _fixes = _lint_content(
+            invalid_feature_content, "file:///test.feature"
+        )
         assert len(diagnostics) >= 1
         assert diagnostics[0].code == "B000"
         assert diagnostics[0].source == "behave-lint"
@@ -150,7 +154,7 @@ class TestLintContent:
         """Empty content should produce parse error."""
         from behave_lint.lsp.server import _lint_content
 
-        diagnostics = _lint_content("", "file:///test.feature")
+        diagnostics, _fixes = _lint_content("", "file:///test.feature")
         assert len(diagnostics) >= 1
 
 
@@ -220,3 +224,104 @@ class TestPublishDiagnostics:
         params = call_args[0][0]
         assert len(params.diagnostics) >= 1
         assert params.diagnostics[0].severity == 1  # Error
+
+
+class TestFixEditConversion:
+    """Tests for _fix_edit_to_text_edit conversion."""
+
+    def test_line_is_zero_indexed(self) -> None:
+        """FixEdit start_line (1-based) should map to LSP line (0-based)."""
+        from behave_lint.autofix.models import FixEdit
+        from behave_lint.lsp.server import _fix_edit_to_text_edit
+        from behave_lint.models.enums import AutoFixCapability
+
+        edit = FixEdit(
+            file_path="test.feature",
+            start_line=3,
+            end_line=3,
+            old_text="@SmokeTest",
+            new_text="@smoke_test",
+            safety=AutoFixCapability.SAFE,
+            rule_id="BS001",
+            diagnostic_line=1,
+        )
+        result = _fix_edit_to_text_edit(edit)
+        assert result.range.start.line == 2  # 0-indexed
+        assert result.range.end.line == 3  # end_line (exclusive)
+
+    def test_new_text_preserved(self) -> None:
+        """The new_text from FixEdit should be preserved in TextEdit."""
+        from behave_lint.autofix.models import FixEdit
+        from behave_lint.lsp.server import _fix_edit_to_text_edit
+        from behave_lint.models.enums import AutoFixCapability
+
+        edit = FixEdit(
+            file_path="test.feature",
+            start_line=1,
+            end_line=1,
+            old_text="@BadTag",
+            new_text="@good_tag",
+            safety=AutoFixCapability.SAFE,
+            rule_id="BS001",
+            diagnostic_line=1,
+        )
+        result = _fix_edit_to_text_edit(edit)
+        assert result.new_text == "@good_tag"
+
+
+class TestLintContentFixes:
+    """Tests for fix collection in _lint_content."""
+
+    def test_fixable_content_returns_fixes(self) -> None:
+        """Content with fixable issues should return fix edits."""
+        from behave_lint.lsp.server import _lint_content
+
+        content = (
+            "@SmokeTest\nFeature: Test\n\n  Scenario: A scenario\n    Given a step\n"
+        )
+        _diagnostics, fixes = _lint_content(content, "file:///test.feature")
+        assert len(fixes) >= 1
+        assert any(f.rule_id == "BS001" for f in fixes)
+
+    def test_parse_error_returns_no_fixes(self, invalid_feature_content: str) -> None:
+        """Parse errors should not produce fix edits."""
+        from behave_lint.lsp.server import _lint_content
+
+        _diagnostics, fixes = _lint_content(
+            invalid_feature_content, "file:///test.feature"
+        )
+        assert fixes == []
+
+
+class TestFixCache:
+    """Tests for the _fix_cache and codeAction integration."""
+
+    def test_publish_diagnostics_populates_fix_cache(self) -> None:
+        """_publish_diagnostics should store fixes in _fix_cache."""
+        from behave_lint.lsp.server import _fix_cache, _publish_diagnostics
+
+        _fix_cache.clear()
+        ls = MagicMock()
+        doc = MagicMock()
+        doc.uri = "file:///cache_test.feature"
+        doc.source = (
+            "@SmokeTest\nFeature: Test\n\n  Scenario: A scenario\n    Given a step\n"
+        )
+
+        _publish_diagnostics(ls, doc)
+        assert "file:///cache_test.feature" in _fix_cache
+        assert len(_fix_cache["file:///cache_test.feature"]) >= 1
+        _fix_cache.clear()
+
+    def test_fix_cache_cleared_on_close(self) -> None:
+        """did_close should remove the URI from _fix_cache."""
+        from behave_lint.lsp.server import _fix_cache
+
+        _fix_cache.clear()
+        _fix_cache["file:///close_test.feature"] = []
+        assert "file:///close_test.feature" in _fix_cache
+
+        # Simulate did_close clearing the cache
+        uri = "file:///close_test.feature"
+        _fix_cache.pop(uri, None)
+        assert "file:///close_test.feature" not in _fix_cache

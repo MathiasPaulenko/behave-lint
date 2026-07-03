@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2025-07-03
+
+### Added
+
+- `textDocument/codeAction` support in LSP server — returns `QuickFix` actions with `TextEdit`s for all 14 auto-fixable rules.
+- `_fix_edit_to_text_edit` conversion from behave-lint `FixEdit` to LSP `TextEdit`.
+- Fix cache (`_fix_cache`) stores fixes per URI, cleared on `didClose`.
+- 6 new tests for codeAction (fix edit conversion, fix collection, fix cache).
+
 ## [2.0.1] - 2025-07-03
 
 ### Fixed

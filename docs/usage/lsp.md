@@ -70,11 +70,15 @@ Any LSP client that supports stdio transport can connect to
 - `textDocument/didChange` — re-lint on every edit (full sync)
 - `textDocument/didSave` — re-lint on save
 - `textDocument/didClose` — clear diagnostics
+- `textDocument/codeAction` — quick fixes for fixable diagnostics
 
 ## Features
 
 - **Real-time diagnostics** — errors, warnings, and info from all 41
   built-in rules
+- **Quick fixes** — `textDocument/codeAction` returns `QuickFix` actions
+  with `TextEdit`s for all 14 auto-fixable rules. Click the lightbulb in
+  your editor to apply safe and unsafe fixes.
 - **Full document sync** — the server receives the complete document
   content on every change
 - **Source attribution** — all diagnostics are tagged with
@@ -84,7 +88,6 @@ Any LSP client that supports stdio transport can connect to
 
 ## Limitations
 
-- No auto-fix via LSP yet (planned for future versions)
 - No configuration via LSP workspace configuration yet (uses
   `pyproject.toml` if present, otherwise defaults)
 - Full document sync only (no incremental sync)

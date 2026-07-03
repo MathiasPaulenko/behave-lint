@@ -16,6 +16,7 @@ import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from behave_lint.autofix.models import FixEdit
 from behave_lint.engine.lint_engine import LintEngine
 from behave_lint.models.config import Config
 from behave_lint.models.enums import Severity
@@ -70,8 +71,28 @@ def _diagnostic_to_lsp(diag: BLDiagnostic) -> lsp.Diagnostic:
     )
 
 
-def _lint_content(content: str, file_uri: str) -> list[lsp.Diagnostic]:
-    """Lint feature file content and return LSP diagnostics.
+def _fix_edit_to_text_edit(edit: FixEdit) -> lsp.TextEdit:
+    """Convert a behave-lint FixEdit to an LSP TextEdit.
+
+    Args:
+        edit: The fix edit to convert.
+
+    Returns:
+        An LSP TextEdit object.
+    """
+    return lsp.TextEdit(
+        range=lsp.Range(
+            start=lsp.Position(line=edit.start_line - 1, character=0),
+            end=lsp.Position(line=edit.end_line, character=0),
+        ),
+        new_text=edit.new_text,
+    )
+
+
+def _lint_content(
+    content: str, file_uri: str
+) -> tuple[list[lsp.Diagnostic], list[FixEdit]]:
+    """Lint feature file content and return LSP diagnostics plus fixes.
 
     Writes content to a temporary .feature file, runs the lint engine,
     and converts diagnostics to LSP format.
@@ -81,7 +102,7 @@ def _lint_content(content: str, file_uri: str) -> list[lsp.Diagnostic]:
         file_uri: The URI of the document (for filtering diagnostics).
 
     Returns:
-        List of LSP Diagnostic objects.
+        A tuple of (LSP diagnostics, fix edits) for this document.
     """
     config = Config()
     registry = RuleRegistry()
@@ -97,7 +118,7 @@ def _lint_content(content: str, file_uri: str) -> list[lsp.Diagnostic]:
         tmp_path = tmp.name
 
     try:
-        result = engine.lint([tmp_path])
+        result = engine.lint([tmp_path], collect_fixes=True)
     finally:
         Path(tmp_path).unlink(missing_ok=True)
 
@@ -106,11 +127,15 @@ def _lint_content(content: str, file_uri: str) -> list[lsp.Diagnostic]:
         if diag.file_path.endswith(tmp_path) or diag.file_path == tmp_path:
             diagnostics.append(_diagnostic_to_lsp(diag))
 
-    return diagnostics
+    fixes = [f for f in result.fixes if f.file_path == tmp_path]
+
+    return diagnostics, fixes
 
 
 def _publish_diagnostics(ls: LanguageServer, doc: TextDocument) -> None:
     """Lint a document and publish diagnostics to the client.
+
+    Also stores fix edits for later use by codeAction requests.
 
     Args:
         ls: The language server instance.
@@ -119,10 +144,14 @@ def _publish_diagnostics(ls: LanguageServer, doc: TextDocument) -> None:
     if not doc.uri.endswith(".feature"):
         return
 
-    diagnostics = _lint_content(doc.source, doc.uri)
+    diagnostics, fixes = _lint_content(doc.source, doc.uri)
     ls.text_document_publish_diagnostics(
         lsp.PublishDiagnosticsParams(uri=doc.uri, diagnostics=diagnostics)
     )
+    _fix_cache[doc.uri] = fixes
+
+
+_fix_cache: dict[str, list[FixEdit]] = {}
 
 
 def create_server() -> LanguageServer:
@@ -133,7 +162,7 @@ def create_server() -> LanguageServer:
     """
     server = LanguageServer(
         name="behave-lint",
-        version="2.0.1",
+        version="2.1.0",
         text_document_sync_kind=lsp.TextDocumentSyncKind.Full,
     )
 
@@ -157,10 +186,41 @@ def create_server() -> LanguageServer:
 
     @server.feature(lsp.TEXT_DOCUMENT_DID_CLOSE)
     def did_close(ls: LanguageServer, params: lsp.DidCloseTextDocumentParams) -> None:
-        """Handle textDocument/didClose — clear diagnostics."""
+        """Handle textDocument/didClose — clear diagnostics and fix cache."""
+        uri = params.text_document.uri
+        _fix_cache.pop(uri, None)
         ls.text_document_publish_diagnostics(
-            lsp.PublishDiagnosticsParams(uri=params.text_document.uri, diagnostics=[])
+            lsp.PublishDiagnosticsParams(uri=uri, diagnostics=[])
         )
+
+    @server.feature(
+        lsp.TEXT_DOCUMENT_CODE_ACTION,
+        lsp.CodeActionOptions(code_action_kinds=[lsp.CodeActionKind.QuickFix]),
+    )
+    def code_action(
+        ls: LanguageServer,
+        params: lsp.CodeActionParams,
+    ) -> list[lsp.CodeAction]:
+        """Handle textDocument/codeAction — return available quick fixes."""
+        uri = params.text_document.uri
+        fixes = _fix_cache.get(uri, [])
+        if not fixes:
+            return []
+
+        actions: list[lsp.CodeAction] = []
+        for fix in fixes:
+            title = f"Fix {fix.rule_id}: {fix.safety.name.lower()} fix"
+            text_edit = _fix_edit_to_text_edit(fix)
+            actions.append(
+                lsp.CodeAction(
+                    title=title,
+                    kind=lsp.CodeActionKind.QuickFix,
+                    edit=lsp.WorkspaceEdit(
+                        changes={uri: [text_edit]},
+                    ),
+                )
+            )
+        return actions
 
     return server
 
@@ -171,4 +231,4 @@ def main() -> None:
     server.start_io()
 
 
-__all__ = ["create_server", "main"]
+__all__ = ["_fix_edit_to_text_edit", "_lint_content", "create_server", "main"]
