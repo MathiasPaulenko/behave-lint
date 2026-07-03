@@ -43,6 +43,7 @@ coverage.xml
 # Cache (behave-lint runtime)
 .cache/
 behave_lint_cache/
+.behave-lint-cache/
 
 # Benchmarks
 benchmarks/projects/
