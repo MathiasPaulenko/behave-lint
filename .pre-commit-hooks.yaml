@@ -1,0 +1,7 @@
+- id: behave-lint
+  name: behave-lint
+  description: "A fast, opinionated, extensible linter for Gherkin .feature files"
+  entry: behave-lint
+  language: python
+  types: [text]
+  files: \.feature$
