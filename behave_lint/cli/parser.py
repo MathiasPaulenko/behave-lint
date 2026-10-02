@@ -1,10 +1,8 @@
 """CLI argument parser — Typer-based parser for behave-lint.
 
-Supports all flags defined in SPECIFICATION.md Section 10 and API.md
-Section 10. Uses progressive disclosure: common flags are prominent,
-advanced flags are documented but less visible.
-
-See COMPONENT_DESIGN.md C01 and SPECIFICATION.md Section 10.
+Supports all linting, reporting and informational flags. Uses
+progressive disclosure: common flags are prominent, advanced flags
+are documented but less visible.
 """
 
 from __future__ import annotations
@@ -26,33 +24,38 @@ class CLIArgs:
         paths: Files or directories to lint.
         select: Rule IDs to enable (comma-separated).
         ignore: Rule IDs to disable (comma-separated).
+        exclude: Glob patterns or directory prefixes to exclude.
         profile: Profile name (e.g. "recommended", "strict", "minimal").
         group: Group names (e.g. ["correctness", "style"]).
-        output: Output format(s).
+        output: Output format (None = use config/default).
         output_file: Output file path (None = stdout).
         config: Explicit path to pyproject.toml.
         color: Force enable colored output.
         no_color: Force disable colored output.
         verbose: Show progress and timing information.
-        quiet: Suppress all output except diagnostics.
+        quiet: Suppress all output, including diagnostics.
         statistics: Show diagnostic statistics.
         no_cache: Disable cache for this run.
         clear_cache: Clear cache before running.
-        fix: Apply safe auto-fixes (future).
-        unsafe_fixes: Apply unsafe auto-fixes (future).
+        fix: Apply safe auto-fixes.
+        unsafe_fixes: Apply unsafe auto-fixes too.
+        dry_run: Preview fixes without writing files.
         watch: Watch for file changes and re-lint automatically.
+        jobs: Thread pool size for rule execution (None = CPU count).
         list_rules: List all available rules and exit.
         explain: Show documentation for a rule and exit.
-        fail_on: Minimum severity that causes non-zero exit.
+        fail_on: Minimum severity that causes non-zero exit
+            (None = use config/default).
         version: Print version and exit.
     """
 
     paths: list[str] = field(default_factory=list)
     select: list[str] = field(default_factory=list)
     ignore: list[str] = field(default_factory=list)
+    exclude: list[str] = field(default_factory=list)
     profile: str = "none"
     group: list[str] = field(default_factory=list)
-    output: str = "console"
+    output: str | None = None
     output_file: str | None = None
     config: str | None = None
     color: bool = False
@@ -64,10 +67,12 @@ class CLIArgs:
     clear_cache: bool = False
     fix: bool = False
     unsafe_fixes: bool = False
+    dry_run: bool = False
     watch: bool = False
+    jobs: int | None = None
     list_rules: bool = False
     explain: str | None = None
-    fail_on: str = "warning"
+    fail_on: str | None = None
     version: bool = False
 
 
@@ -131,6 +136,13 @@ def lint(
         str | None,
         typer.Option("--ignore", help="Disable specific rules (comma-separated)."),
     ] = None,
+    exclude: Annotated[
+        str | None,
+        typer.Option(
+            "--exclude",
+            help="Exclude files/dirs (comma-separated globs or prefixes).",
+        ),
+    ] = None,
     profile: Annotated[
         str | None,
         typer.Option(
@@ -145,7 +157,8 @@ def lint(
             help=(
                 "Select rules by group (comma-separated). "
                 "Categories: correctness, style, pedantic, "
-                "step-definitions, consistency. "
+                "step-definitions, consistency, complexity, security, "
+                "i18n, accessibility. "
                 "Tags: naming, tags, steps, background, description, "
                 "documentation, formatting, examples, scenarios, "
                 "readability."
@@ -153,13 +166,21 @@ def lint(
         ),
     ] = None,
     fail_on: Annotated[
-        FailOn,
-        typer.Option("--fail-on", help="Minimum severity for non-zero exit."),
-    ] = FailOn.warning,
+        FailOn | None,
+        typer.Option(
+            "--fail-on", help="Minimum severity for non-zero exit."
+        ),
+    ] = None,
     output: Annotated[
-        OutputFormat,
-        typer.Option("--output", help="Output format."),
-    ] = OutputFormat.console,
+        str | None,
+        typer.Option(
+            "--output",
+            help=(
+                "Output format: console, json, markdown, sarif, github, "
+                "or a plugin-provided format."
+            ),
+        ),
+    ] = None,
     output_file: Annotated[
         str | None,
         typer.Option("--output-file", help="Write output to file instead of stdout."),
@@ -174,7 +195,10 @@ def lint(
         bool, typer.Option("--verbose", help="Show progress and timing info.")
     ] = False,
     quiet: Annotated[
-        bool, typer.Option("--quiet", help="Suppress all output except diagnostics.")
+        bool,
+        typer.Option(
+            "--quiet", help="Suppress all output (including diagnostics)."
+        ),
     ] = False,
     statistics: Annotated[
         bool, typer.Option("--statistics", help="Show diagnostic statistics.")
@@ -196,6 +220,14 @@ def lint(
         bool,
         typer.Option("--unsafe-fixes", help="Apply unsafe auto-fixes too."),
     ] = False,
+    dry_run: Annotated[
+        bool,
+        typer.Option("--dry-run", help="Preview fixes without writing files."),
+    ] = False,
+    jobs: Annotated[
+        int | None,
+        typer.Option("--jobs", help="Thread pool size for rule execution."),
+    ] = None,
     watch: Annotated[
         bool,
         typer.Option("--watch", help="Watch for changes and re-lint automatically."),
@@ -224,9 +256,10 @@ def lint(
         paths=list(paths) if paths else [],
         select=_parse_rule_list(select) if select else [],
         ignore=_parse_rule_list(ignore) if ignore else [],
+        exclude=_parse_rule_list(exclude) if exclude else [],
         profile=profile if profile else "none",
         group=_parse_rule_list(group) if group else [],
-        output=output.value,
+        output=output,
         output_file=output_file,
         config=config,
         color=color,
@@ -238,10 +271,12 @@ def lint(
         clear_cache=clear_cache,
         fix=fix,
         unsafe_fixes=unsafe_fixes,
+        dry_run=dry_run,
         watch=watch,
+        jobs=jobs,
         list_rules=list_rules,
         explain=explain,
-        fail_on=fail_on.value,
+        fail_on=fail_on.value if fail_on else None,
         version=False,
     )
     return run_lint(args)
