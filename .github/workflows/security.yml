@@ -1,12 +1,13 @@
 name: Security
 
+# Scheduled run removed — GitHub disables schedules after 60 days
+# of inactivity; the audit still runs on every push and PR.
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
-  schedule:
-    - cron: "0 6 * * 1"
+  workflow_dispatch:
 
 permissions:
   contents: read

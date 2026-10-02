@@ -1,8 +1,8 @@
 name: Nightly
 
+# Runs benchmarks on demand only — GitHub disables scheduled
+# workflows after 60 days of repository inactivity anyway.
 on:
-  schedule:
-    - cron: "0 3 * * *"
   workflow_dispatch:
 
 permissions:
