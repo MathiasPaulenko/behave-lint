@@ -16,6 +16,7 @@ import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from behave_lint import __version__
 from behave_lint.autofix.models import FixEdit
 from behave_lint.configuration.loader import load_config
 from behave_lint.engine.lint_engine import LintEngine
@@ -72,19 +73,36 @@ def _diagnostic_to_lsp(diag: BLDiagnostic) -> lsp.Diagnostic:
     )
 
 
-def _fix_edit_to_text_edit(edit: FixEdit) -> lsp.TextEdit:
+def _fix_edit_to_text_edit(
+    edit: FixEdit, content: str | None = None
+) -> lsp.TextEdit:
     """Convert a behave-lint FixEdit to an LSP TextEdit.
+
+    ``FixEdit`` uses 1-based inclusive line ranges; LSP uses 0-based
+    exclusive ranges. Replacing up to the start of the line after
+    ``end_line`` is the natural mapping, but that position does not
+    exist when the edit reaches the final line — in that case the end
+    is clamped to the end of the last line.
 
     Args:
         edit: The fix edit to convert.
+        content: Current document content, used to clamp the end
+            position when the edit reaches the last line.
 
     Returns:
         An LSP TextEdit object.
     """
+    end_line = edit.end_line  # 1-based inclusive == 0-based exclusive
+    end_char = 0
+    if content is not None:
+        lines = content.split("\n")
+        if end_line >= len(lines):
+            end_line = len(lines) - 1
+            end_char = len(lines[-1])
     return lsp.TextEdit(
         range=lsp.Range(
             start=lsp.Position(line=edit.start_line - 1, character=0),
-            end=lsp.Position(line=edit.end_line, character=0),
+            end=lsp.Position(line=end_line, character=end_char),
         ),
         new_text=edit.new_text,
     )
@@ -245,7 +263,7 @@ def create_server() -> LanguageServer:
     """
     server = LanguageServer(
         name="behave-lint",
-        version="2.4.0",
+        version=__version__,
         text_document_sync_kind=lsp.TextDocumentSyncKind.Incremental,
     )
 
@@ -257,10 +275,15 @@ def create_server() -> LanguageServer:
 
     @server.feature(lsp.TEXT_DOCUMENT_DID_CHANGE)
     def did_change(ls: LanguageServer, params: lsp.DidChangeTextDocumentParams) -> None:
-        """Handle textDocument/didChange — apply incremental changes and re-lint."""
+        """Handle textDocument/didChange — re-lint the updated document.
+
+        pygls applies incremental content changes to the workspace
+        document before invoking this handler, so ``doc.source`` already
+        reflects the edit; re-applying ``params.content_changes`` would
+        corrupt the text.
+        """
         doc = ls.workspace.get_text_document(params.text_document.uri)
-        updated = _apply_content_changes(doc.source, list(params.content_changes))
-        _publish_diagnostics(ls, doc, content_override=updated)
+        _publish_diagnostics(ls, doc)
 
     @server.feature(lsp.TEXT_DOCUMENT_DID_SAVE)
     def did_save(ls: LanguageServer, params: lsp.DidSaveTextDocumentParams) -> None:
@@ -304,10 +327,13 @@ def create_server() -> LanguageServer:
         if not fixes:
             return []
 
+        doc = ls.workspace.get_text_document(uri)
+        content = doc.source if doc is not None else None
+
         actions: list[lsp.CodeAction] = []
         for fix in fixes:
             title = f"Fix {fix.rule_id}: {fix.safety.name.lower()} fix"
-            text_edit = _fix_edit_to_text_edit(fix)
+            text_edit = _fix_edit_to_text_edit(fix, content)
             actions.append(
                 lsp.CodeAction(
                     title=title,
