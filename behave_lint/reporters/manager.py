@@ -3,8 +3,6 @@
 Selects reporters based on the configured output format, instantiates
 them, and coordinates rendering. Supports multiple simultaneous
 output formats.
-
-See COMPONENT_DESIGN.md C08 and API.md Section 8.
 """
 
 from __future__ import annotations
@@ -32,12 +30,20 @@ class ReporterManager:
     Attributes:
         _reporters: Mapping of format name to reporter class.
         _instances: Mapping of format name to reporter instance.
+        _use_color: Color preference for the console reporter
+            (None = auto-detect).
     """
 
-    def __init__(self) -> None:
-        """Initialize the reporter manager with built-in reporters."""
+    def __init__(self, *, use_color: bool | None = None) -> None:
+        """Initialize the reporter manager with built-in reporters.
+
+        Args:
+            use_color: Force enable/disable ANSI color in the console
+                reporter. If None, auto-detect based on the terminal.
+        """
         self._reporters: dict[str, type[Reporter]] = dict(_BUILTIN_REPORTERS)
         self._instances: dict[str, Reporter] = {}
+        self._use_color = use_color
 
     def register(self, reporter_cls: type[Reporter]) -> None:
         """Register a custom reporter class.
@@ -73,7 +79,11 @@ class ReporterManager:
                 f"Available: {', '.join(sorted(self._reporters))}"
             )
 
-        instance = cls()
+        instance: Reporter
+        if issubclass(cls, ConsoleReporter):
+            instance = cls(use_color=self._use_color)
+        else:
+            instance = cls()
         self._instances[format_name] = instance
         return instance
 

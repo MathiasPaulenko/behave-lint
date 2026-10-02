@@ -3,8 +3,6 @@
 Discovers plugins from Python entry points, loads them lazily, and
 registers their rules/reporters with the appropriate registries. Plugin
 failures are isolated — a broken plugin does not crash the engine.
-
-See COMPONENT_DESIGN.md C09, API.md Section 9, and RULE_ENGINE.md Section 3.
 """
 
 from __future__ import annotations
@@ -281,8 +279,138 @@ class PluginManager:
 
         return count
 
-    def load_all(self) -> tuple[int, list[str]]:
+    def _is_plugin_enabled(
+        self, name: str, plugin_config: dict[str, bool] | None
+    ) -> bool:
+        """Check whether a plugin is enabled by the config map.
+
+        A ``plugins`` entry of ``{"name": false}`` disables that plugin.
+        A ``"*"`` entry sets the default for unlisted plugins, so
+        ``{"*": false, "x": true}`` enables only ``x``.
+
+        Args:
+            name: The plugin entry point name.
+            plugin_config: The ``plugins`` map from configuration.
+
+        Returns:
+            True if the plugin should be loaded.
+        """
+        if not plugin_config:
+            return True
+        if name in plugin_config:
+            return bool(plugin_config[name])
+        return bool(plugin_config.get("*", True))
+
+    def load_config_plugins(self) -> dict[str, object]:
+        """Load config-provider plugins and collect their overrides.
+
+        Config plugins (``behave_lint.config`` entry point group) must
+        provide a callable returning a dict of configuration overrides.
+        These are merged into the configuration before CLI overrides.
+
+        Returns:
+            A dict of configuration overrides provided by plugins.
+        """
+        overrides: dict[str, object] = {}
+        for plugin in sorted(self._plugins.values(), key=lambda p: (p.group, p.name)):
+            if plugin.type is not PluginType.CONFIG:
+                continue
+            try:
+                target = self.load_plugin(plugin)
+            except PluginLoadError as exc:
+                self._errors.append(str(exc))
+                logger.warning("Plugin '%s' failed: %s", plugin.name, exc)
+                continue
+            if not callable(target):
+                continue
+            try:
+                result = target()
+            except Exception as exc:
+                error = PluginRegistrationError(plugin.name, str(exc))
+                self._errors.append(str(error))
+                warnings.warn(str(error), stacklevel=2)
+                continue
+            if isinstance(result, dict):
+                overrides.update(result)
+        return overrides
+
+    def register_reporters(
+        self,
+        reporter_manager: object,
+        plugin_config: dict[str, bool] | None = None,
+    ) -> int:
+        """Register reporter plugins with the reporter manager.
+
+        Reporter plugins (``behave_lint.reporters`` entry point group)
+        must provide a ``Reporter`` subclass or a callable returning one
+        (or a list of them).
+
+        Args:
+            reporter_manager: The ReporterManager to register into.
+            plugin_config: Optional enable/disable map (``plugins``
+                config key).
+
+        Returns:
+            Number of reporters successfully registered.
+        """
+        from behave_lint.reporters.base import Reporter
+
+        count = 0
+        for plugin in sorted(self._plugins.values(), key=lambda p: (p.group, p.name)):
+            if plugin.type is not PluginType.REPORTERS:
+                continue
+            if not self._is_plugin_enabled(plugin.name, plugin_config):
+                continue
+            key = (plugin.group, plugin.name)
+            if key not in self._loaded:
+                try:
+                    self.load_plugin(plugin)
+                except PluginLoadError as exc:
+                    self._errors.append(str(exc))
+                    logger.warning("Plugin '%s' failed: %s", plugin.name, exc)
+                    continue
+            target = self._loaded_objects.get(key)
+            reporter_classes: list[type[Reporter]] = []
+            if isinstance(target, type) and issubclass(target, Reporter):
+                reporter_classes = [target]
+            elif callable(target):
+                try:
+                    result = target()
+                except Exception as exc:
+                    error = PluginRegistrationError(plugin.name, str(exc))
+                    self._errors.append(str(error))
+                    warnings.warn(str(error), stacklevel=2)
+                    continue
+                if isinstance(result, list):
+                    reporter_classes = [
+                        r
+                        for r in result
+                        if isinstance(r, type) and issubclass(r, Reporter)
+                    ]
+                elif isinstance(result, type) and issubclass(result, Reporter):
+                    reporter_classes = [result]
+
+            for cls in reporter_classes:
+                try:
+                    reporter_manager.register(cls)  # type: ignore[attr-defined]
+                    count += 1
+                except Exception as exc:
+                    error = PluginRegistrationError(plugin.name, str(exc))
+                    self._errors.append(str(error))
+                    warnings.warn(str(error), stacklevel=2)
+        return count
+
+    def load_all(
+        self,
+        plugin_config: dict[str, bool] | None = None,
+    ) -> tuple[int, list[str]]:
         """Load and register all discovered plugins.
+
+        Args:
+            plugin_config: Optional enable/disable map from
+                configuration (``plugins`` key). ``{"name": false}``
+                disables a plugin; ``{"*": false}`` disables all
+                unlisted plugins.
 
         Returns:
             A tuple of (total_rules_registered, list_of_errors).
@@ -291,12 +419,18 @@ class PluginManager:
         errors: list[str] = []
 
         for plugin in sorted(self._plugins.values(), key=lambda p: (p.group, p.name)):
+            if not self._is_plugin_enabled(plugin.name, plugin_config):
+                logger.debug("Plugin '%s' disabled by configuration", plugin.name)
+                continue
             if plugin.type is PluginType.RULES:
                 try:
                     total += self.register_rules(plugin)
                 except (PluginLoadError, PluginRegistrationError) as exc:
                     errors.append(str(exc))
                     logger.warning("Plugin '%s' failed: %s", plugin.name, exc)
+            elif plugin.type is PluginType.CONFIG:
+                # Already loaded by load_config_plugins().
+                continue
             else:
                 try:
                     self.load_plugin(plugin)
