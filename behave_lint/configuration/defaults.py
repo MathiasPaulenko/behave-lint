@@ -3,8 +3,6 @@
 These constants define the built-in defaults, the set of recognized
 configuration keys, and the mapping between environment variables and
 config fields.
-
-See CONFIGURATION_SYSTEM.md Sections 2, 5, and 10.
 """
 
 from __future__ import annotations
@@ -35,18 +33,23 @@ KNOWN_CONFIG_KEYS: frozenset[str] = frozenset(
         "fail-on",
         "plugins",
         "rules",
+        "rule_params",
+        "severity_overrides",
         "max_warnings",
         "max-warnings",
     }
 )
 
-# Keys that use kebab-case in TOML but map to snake_case in Config
+# Keys that use kebab-case in TOML but map to snake_case in Config.
+# The model-level names are also accepted as aliases.
 KEY_ALIASES: dict[str, str] = {
     "output-file": "output_file",
     "step-definitions": "step_definitions",
     "cache-dir": "cache_dir",
     "fail-on": "fail_on",
     "max-warnings": "max_warnings",
+    "severity_overrides": "severity",
+    "rule_params": "rules",
 }
 
 # --- Built-in defaults ---

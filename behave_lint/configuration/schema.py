@@ -2,8 +2,6 @@
 
 Validates raw configuration dicts from any source (TOML, env, CLI)
 before they are merged into a Config object.
-
-See CONFIGURATION_SYSTEM.md Section 12.
 """
 
 from __future__ import annotations

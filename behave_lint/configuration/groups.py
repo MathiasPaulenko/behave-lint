@@ -23,6 +23,7 @@ Built-in groups (category-based):
 - ``pedantic`` — all BP rules (strict best practices, opt-in).
 - ``step-definitions`` — all BD rules (cross-reference with step defs).
 - ``consistency`` — all BK rules (cross-file consistency).
+- ``complexity`` — all BX rules (overly complex specifications).
 - ``security`` — all BSEC rules (security and sensitive data).
 - ``i18n`` — all BI18N rules (internationalization).
 - ``accessibility`` — all BACC rules (accessibility and inclusive design).
@@ -43,6 +44,7 @@ Built-in groups (tag-based):
 from __future__ import annotations
 
 from behave_lint.exceptions import InvalidConfigValueError
+from behave_lint.models.enums import Category
 
 # Category-based group names (map to Category enum values)
 GROUP_CORRECTNESS = "correctness"
@@ -50,6 +52,7 @@ GROUP_STYLE = "style"
 GROUP_PEDANTIC = "pedantic"
 GROUP_STEP_DEFINITIONS = "step-definitions"
 GROUP_CONSISTENCY = "consistency"
+GROUP_COMPLEXITY = "complexity"
 GROUP_SECURITY = "security"
 GROUP_I18N = "i18n"
 GROUP_ACCESSIBILITY = "accessibility"
@@ -66,6 +69,21 @@ GROUP_EXAMPLES = "examples"
 GROUP_SCENARIOS = "scenarios"
 GROUP_READABILITY = "readability"
 
+# Category group mapping (group name -> Category enum member).
+# Matching is done on the rule's declared category, not on the rule-ID
+# prefix — prefixes are ambiguous (``BS`` is a prefix of ``BSEC``).
+_CATEGORY_GROUPS: dict[str, Category] = {
+    GROUP_CORRECTNESS: Category.CORRECTNESS,
+    GROUP_STYLE: Category.STYLE,
+    GROUP_PEDANTIC: Category.PEDANTIC,
+    GROUP_STEP_DEFINITIONS: Category.STEP_DEFINITIONS,
+    GROUP_CONSISTENCY: Category.CONSISTENCY,
+    GROUP_COMPLEXITY: Category.COMPLEXITY,
+    GROUP_SECURITY: Category.SECURITY,
+    GROUP_I18N: Category.I18N,
+    GROUP_ACCESSIBILITY: Category.ACCESSIBILITY,
+}
+
 # Category prefix mapping (group name -> rule ID prefix)
 _CATEGORY_PREFIXES: dict[str, str] = {
     GROUP_CORRECTNESS: "BC",
@@ -73,6 +91,7 @@ _CATEGORY_PREFIXES: dict[str, str] = {
     GROUP_PEDANTIC: "BP",
     GROUP_STEP_DEFINITIONS: "BD",
     GROUP_CONSISTENCY: "BK",
+    GROUP_COMPLEXITY: "BX",
     GROUP_SECURITY: "BSEC",
     GROUP_I18N: "BI18N",
     GROUP_ACCESSIBILITY: "BACC",
@@ -124,9 +143,22 @@ def is_category_group(name: str) -> bool:
         name: Group name to check.
 
     Returns:
-        True if the group maps to a rule ID prefix (category-based).
+        True if the group maps to a rule category.
     """
-    return name in _CATEGORY_PREFIXES
+    return name in _CATEGORY_GROUPS
+
+
+def get_group_category(name: str) -> Category | None:
+    """Get the rule category for a category-based group.
+
+    Args:
+        name: Group name.
+
+    Returns:
+        The Category member (e.g. ``Category.STYLE``) or None if not a
+        category group.
+    """
+    return _CATEGORY_GROUPS.get(name)
 
 
 def get_category_prefix(name: str) -> str | None:
@@ -187,6 +219,7 @@ def parse_groups(value: str | list[str]) -> list[str]:
 __all__ = [
     "GROUP_ACCESSIBILITY",
     "GROUP_BACKGROUND",
+    "GROUP_COMPLEXITY",
     "GROUP_CONSISTENCY",
     "GROUP_CORRECTNESS",
     "GROUP_DESCRIPTION",
@@ -204,6 +237,7 @@ __all__ = [
     "GROUP_STYLE",
     "GROUP_TAGS",
     "get_category_prefix",
+    "get_group_category",
     "get_group_names",
     "get_group_tags",
     "is_category_group",

@@ -4,8 +4,6 @@ Discovery order:
 1. Explicit path (if provided).
 2. Current directory → parent directories (walk up to filesystem root).
 3. Defaults (if no file found).
-
-See CONFIGURATION_SYSTEM.md Section 3.
 """
 
 from __future__ import annotations

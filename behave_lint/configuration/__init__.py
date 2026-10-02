@@ -1,8 +1,6 @@
 """Configuration Manager — loading, merging, validation, defaults.
 
 Application layer — component C02.
-
-See COMPONENT_DESIGN.md Section 5 and CONFIGURATION_SYSTEM.md.
 """
 
 from __future__ import annotations

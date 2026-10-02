@@ -10,8 +10,6 @@ Merge rules:
 - Scalars: highest precedence wins (replaces).
 - Lists: highest precedence wins (replaces, no concatenation).
 - Dicts: merged (highest precedence keys override matching lower keys).
-
-See CONFIGURATION_SYSTEM.md Sections 2, 4, 10, 11.
 """
 
 from __future__ import annotations
@@ -38,7 +36,7 @@ from behave_lint.configuration.schema import (
     validate_severity_overrides,
     validate_types,
 )
-from behave_lint.exceptions import InvalidConfigValueError
+from behave_lint.exceptions import ConfigError, InvalidConfigValueError
 from behave_lint.models.config import Config
 
 # Config fields that are dicts (merged rather than replaced)
@@ -183,6 +181,20 @@ def build_config(merged: dict[str, object]) -> Config:
     rule_params = merged.get("rules", {})
     if not isinstance(rule_params, dict):
         rule_params = {}
+    # Normalize kebab-case parameter keys (e.g. ``max-steps``) to the
+    # snake_case names rules expect (e.g. ``max_steps``).
+    normalized_params: dict[str, dict[str, object]] = {}
+    for rule_id, params in rule_params.items():
+        if not isinstance(params, dict):
+            raise InvalidConfigValueError(
+                key=f"rules.{rule_id}",
+                value=params,
+                expected="table of rule parameters",
+            )
+        normalized_params[rule_id] = {
+            str(k).replace("-", "_"): v for k, v in params.items()
+        }
+    rule_params = normalized_params
 
     cache = merged.get("cache", True)
     if not isinstance(cache, bool):
@@ -222,26 +234,89 @@ def build_config(merged: dict[str, object]) -> Config:
     )
 
 
-def _build_rule_mappings() -> tuple[set[str], dict[str, set[str]]]:
-    """Build rule ID and tag mappings from built-in rules.
+def _build_rule_mappings() -> tuple[dict[str, object], dict[str, set[str]]]:
+    """Build rule category and tag mappings from built-in rules.
 
     Used by group expansion to map group names to rule IDs.
 
     Returns:
-        Tuple of (all rule IDs, rule ID -> tags mapping).
+        Tuple of (rule ID -> category, rule ID -> tags) mappings.
     """
     from behave_lint.rules.builtin import _BUILTIN_RULES
 
-    all_ids: set[str] = set()
+    rule_categories: dict[str, object] = {}
     rule_tags: dict[str, set[str]] = {}
     for rule_class in _BUILTIN_RULES:
         metadata = getattr(rule_class, "metadata", None)
         if metadata is None:
             continue
         rule_id = metadata.rule_id
-        all_ids.add(rule_id)
+        rule_categories[rule_id] = metadata.category
         rule_tags[rule_id] = set(metadata.tags)
-    return all_ids, rule_tags
+    return rule_categories, rule_tags
+
+
+def _resolve_extends(
+    config: dict[str, object],
+    config_file: Path,
+    visited: set[Path],
+) -> dict[str, object]:
+    """Resolve ``extends`` chains into a merged parent config dict.
+
+    The referenced file may be another ``pyproject.toml`` (the
+    ``[tool.behave-lint]`` section is used) or a plain TOML file whose
+    top-level keys are treated as behave-lint configuration.
+
+    Args:
+        config: The already-normalized local configuration dict.
+        config_file: Path of the file the config was loaded from.
+        visited: Files already seen (cycle protection).
+
+    Returns:
+        The merged parent configuration (lowest precedence).
+
+    Raises:
+        ConfigError: If the extended file is missing, unreadable, or
+            the chain is cyclic.
+    """
+    extends = config.get("extends")
+    if not isinstance(extends, str) or not extends:
+        return {}
+
+    parent_path = (config_file.parent / extends).resolve()
+    if parent_path in visited:
+        raise ConfigError(
+            f"Cyclic 'extends' chain involving '{parent_path}'."
+        )
+    if not parent_path.is_file():
+        raise ConfigError(
+            f"Extended configuration file not found: '{extends}' "
+            f"(referenced from '{config_file}')."
+        )
+
+    raw = load_toml_config(parent_path)
+    if not raw:
+        # Plain TOML file without a [tool.behave-lint] section — treat
+        # the whole document as behave-lint configuration.
+        import tomllib
+
+        try:
+            with parent_path.open("rb") as f:
+                data = tomllib.load(f)
+        except tomllib.TOMLDecodeError as exc:
+            raise ConfigError(
+                f"Invalid TOML in extended configuration file "
+                f"'{parent_path}': {exc}"
+            ) from exc
+        raw = data if isinstance(data, dict) else {}
+
+    check_unknown_keys(raw)
+    normalized = normalize_keys(raw)
+
+    merged_parent = _resolve_extends(normalized, parent_path, visited | {parent_path})
+    merged_parent = merge_configs(merged_parent, normalized)
+    merged_parent.pop("extends", None)
+    return merged_parent
 
 
 def load_config(
@@ -284,6 +359,11 @@ def load_config(
         raw_toml = load_toml_config(config_file)
         check_unknown_keys(raw_toml)
         toml_config = normalize_keys(raw_toml)
+        # ``extends`` pulls in a parent config file; the local file wins.
+        parent_config = _resolve_extends(toml_config, config_file, {config_file})
+        if parent_config:
+            merged = merge_configs(merged, parent_config)
+        toml_config.pop("extends", None)
 
     # 3. Determine profile from highest-precedence source:
     #    CLI overrides > env > pyproject.toml > defaults
@@ -291,11 +371,8 @@ def load_config(
     if overrides is not None:
         profile_name = str(overrides.get("profile", "none"))
     if profile_name == "none":
-        env_profile = env.get(f"{ENV_PREFIX}PROFILE") if env else None
-        if env_profile is None:
-            import os
-
-            env_profile = os.environ.get(f"{ENV_PREFIX}PROFILE")
+        env_source = env if env is not None else os.environ
+        env_profile = env_source.get(f"{ENV_PREFIX}PROFILE")
         if env_profile:
             profile_name = env_profile
     if profile_name == "none":
@@ -323,11 +400,8 @@ def load_config(
         elif isinstance(group_raw, list):
             group_names = list(group_raw)
     if not group_names:
-        env_group = env.get(f"{ENV_PREFIX}GROUP") if env else None
-        if env_group is None:
-            import os
-
-            env_group = os.environ.get(f"{ENV_PREFIX}GROUP")
+        env_source = env if env is not None else os.environ
+        env_group = env_source.get(f"{ENV_PREFIX}GROUP")
         if env_group:
             from behave_lint.configuration.groups import parse_groups
 
@@ -367,7 +441,7 @@ def load_config(
         merged["group"] = final_groups
     if isinstance(final_groups, list) and final_groups:
         from behave_lint.configuration.groups import (
-            get_category_prefix,
+            get_group_category,
             get_group_tags,
             is_category_group,
             is_valid_group,
@@ -384,15 +458,15 @@ def load_config(
                     expected=f"one of: {valid}",
                 )
 
-        all_rule_ids, rule_tags_map = _build_rule_mappings()
+        rule_categories, rule_tags_map = _build_rule_mappings()
 
         group_rule_ids: set[str] = set()
         for gname in final_groups:
             if is_category_group(gname):
-                prefix = get_category_prefix(gname)
-                if prefix:
-                    for rule_id in all_rule_ids:
-                        if rule_id.startswith(prefix):
+                category = get_group_category(gname)
+                if category is not None:
+                    for rule_id, rule_category in rule_categories.items():
+                        if rule_category == category:
                             group_rule_ids.add(rule_id)
             else:
                 tags = get_group_tags(gname)
@@ -405,7 +479,7 @@ def load_config(
             existing_select = merged.get("select", [])
             if not isinstance(existing_select, list):
                 existing_select = []
-            merged["select"] = list(
+            merged["select"] = sorted(
                 set(existing_select) | group_rule_ids,
             )
 
