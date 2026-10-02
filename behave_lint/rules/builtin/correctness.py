@@ -2,8 +2,6 @@
 
 Rules that detect definitively wrong structures causing runtime errors
 or test failures.
-
-See RULE_TAXONOMY.md Section 3 and IMPLEMENTATION_ROADMAP.md E7.1.
 """
 
 from __future__ import annotations

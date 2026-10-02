@@ -1,6 +1,4 @@
 """Rule scope enum — distinguishes single-file from cross-file rules.
-
-See RULE_ENGINE.md Section 6 and API.md Section 7.
 """
 
 from __future__ import annotations

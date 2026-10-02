@@ -5,8 +5,6 @@ Commands:
     --list-rules   — List all available rules.
     --explain      — Show documentation for a rule.
     --version      — Print version and exit.
-
-See API.md Section 10 and SPECIFICATION.md Section 10.
 """
 
 from __future__ import annotations

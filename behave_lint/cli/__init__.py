@@ -2,8 +2,6 @@
 
 Parses command-line arguments, routes commands, invokes the engine,
 renders output, and determines exit codes.
-
-See COMPONENT_DESIGN.md Section 4 and API.md Section 10.
 """
 
 from __future__ import annotations

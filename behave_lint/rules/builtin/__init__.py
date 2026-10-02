@@ -1,7 +1,7 @@
-"""Built-in rules — registered via entry points in M7.
+"""Built-in rules.
 
 This subpackage contains all built-in rule implementations organized by
-category (per RULE_TAXONOMY.md). Each category gets its own module.
+category. Each category gets its own module.
 """
 
 from __future__ import annotations

@@ -3,8 +3,6 @@
 Maintains the registry of rule classes and their metadata. Provides
 lookup by ID, category, and tag. Filters rules based on configuration
 (select, ignore) and provides the ordered list of enabled rules.
-
-See COMPONENT_DESIGN.md C04 and RULE_ENGINE.md Section 3.
 """
 
 from __future__ import annotations
@@ -17,7 +15,7 @@ from behave_lint.models.rule_metadata import RuleMetadata
 from behave_lint.rules.base import Rule
 from behave_lint.rules.validation import validate_metadata
 
-# Category execution order (RULE_ENGINE.md Section 5)
+# Category execution order
 _CATEGORY_ORDER: dict[Category, int] = {
     Category.CORRECTNESS: 0,
     Category.STYLE: 1,

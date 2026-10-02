@@ -2,8 +2,6 @@
 
 Rules that detect inconsistencies across features and scenarios.
 Default severity: WARNING. Some rules are cross-file scope.
-
-See RULE_TAXONOMY.md Section 3 and IMPLEMENTATION_ROADMAP.md E7.4.
 """
 
 from __future__ import annotations

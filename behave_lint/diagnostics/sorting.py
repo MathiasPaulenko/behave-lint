@@ -5,8 +5,6 @@ The sort order is stable and documented:
 2. Line number (ascending).
 3. Column number (ascending, None sorts before any value).
 4. Rule ID (lexicographic, ascending).
-
-See DIAGNOSTIC_ENGINE.md Section 9.
 """
 
 from __future__ import annotations

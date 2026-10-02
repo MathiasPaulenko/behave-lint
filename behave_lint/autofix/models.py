@@ -2,8 +2,6 @@
 
 FixEdit represents a single text replacement to apply to a .feature file.
 FixResult records the outcome of a fix application run.
-
-See RULE_ENGINE.md Section 9 and COMPONENT_DESIGN.md C18.
 """
 
 from __future__ import annotations

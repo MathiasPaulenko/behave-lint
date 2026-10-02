@@ -2,8 +2,6 @@
 
 Produces a Markdown document with a summary table and a diagnostic
 table, using collapsible sections for long diagnostic lists.
-
-See SPECIFICATION.md Section 12 and API.md Section 8.
 """
 
 from __future__ import annotations

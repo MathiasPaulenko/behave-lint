@@ -1,8 +1,6 @@
 """Rule base class, visitor engine, documentation provider, built-in rules.
 
 Domain layer — components C04, C05, C06, C19.
-
-See COMPONENT_DESIGN.md Section 6 and RULE_ENGINE.md.
 """
 
 from __future__ import annotations

@@ -4,8 +4,6 @@ RuleMetadata is the identity card of a rule. It drives configuration
 validation, documentation generation, CLI features, and plugin
 compatibility checking.
 
-See API.md Section 4, RULE_ENGINE.md Section 4, and RULE_TAXONOMY.md
-Section 5.
 """
 
 from __future__ import annotations

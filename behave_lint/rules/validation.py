@@ -2,8 +2,6 @@
 
 Validates that every registered rule meets the minimum requirements
 for correct execution. Invalid rules are rejected with a warning.
-
-See RULE_ENGINE.md Section 12.
 """
 
 from __future__ import annotations

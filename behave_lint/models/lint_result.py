@@ -2,8 +2,6 @@
 
 LintResult is the top-level return value of a lint run. It contains
 all diagnostics, an execution summary, and the exit code.
-
-See API.md Section 4.
 """
 
 from __future__ import annotations

@@ -2,8 +2,6 @@
 
 Rules that enforce stylistic conventions for readability and consistency.
 Default severity: WARNING.
-
-See RULE_TAXONOMY.md Section 3 and IMPLEMENTATION_ROADMAP.md E7.2.
 """
 
 from __future__ import annotations

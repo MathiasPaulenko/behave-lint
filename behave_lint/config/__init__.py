@@ -1,6 +1,4 @@
 """Public configuration API — alias for behave_lint.configuration.
-
-See API.md Section 6 and CONFIGURATION_SYSTEM.md.
 """
 
 from __future__ import annotations

@@ -3,8 +3,6 @@
 Subclass ``Rule``, implement ``check()``, and provide metadata via
 class attributes. The ``self.diagnostic()`` helper constructs a
 ``Diagnostic`` with the rule's ID, category, and severity pre-filled.
-
-See API.md Section 7 and RULE_ENGINE.md Section 2.
 """
 
 from __future__ import annotations

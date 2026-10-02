@@ -3,8 +3,6 @@
 The factory ensures that diagnostics are always correctly attributed to
 the producing rule and have consistent metadata (rule_id, category,
 severity).
-
-See RULE_ENGINE.md Section 8 and API.md Section 7.
 """
 
 from __future__ import annotations

@@ -4,8 +4,6 @@ Collects fixable diagnostics from rules, orders them by file (bottom-to-top)
 and rule execution order, detects conflicts (overlapping line ranges), and
 applies non-conflicting fixes atomically per file. Supports --fix (safe only)
 and --unsafe-fixes (safe + unsafe). Dry-run mode previews without writing.
-
-See RULE_ENGINE.md Section 9 and COMPONENT_DESIGN.md C18.
 """
 
 from __future__ import annotations

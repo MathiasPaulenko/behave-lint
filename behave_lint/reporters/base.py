@@ -2,8 +2,6 @@
 
 All reporters inherit from this class and implement the render() method
 to transform a LintResult into formatted output.
-
-See API.md Section 8 and COMPONENT_DESIGN.md C08.
 """
 
 from __future__ import annotations

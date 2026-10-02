@@ -2,8 +2,6 @@
 
 The context is read-only. Rules must not modify it. It contains all
 the data and services a rule needs to perform its analysis.
-
-See RULE_ENGINE.md Section 8.
 """
 
 from __future__ import annotations

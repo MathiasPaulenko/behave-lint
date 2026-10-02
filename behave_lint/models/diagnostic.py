@@ -3,8 +3,6 @@
 A Diagnostic is an immutable frozen dataclass created by rules during
 execution. It is consumed by reporters for output and never modified
 by the engine.
-
-See API.md Section 4 and DIAGNOSTIC_ENGINE.md Section 3.
 """
 
 from __future__ import annotations

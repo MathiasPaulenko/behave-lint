@@ -3,8 +3,6 @@
 Loads feature files into behave-model's Feature objects, handling parse
 errors gracefully. Each file is loaded independently — a parse failure in
 one file does not prevent loading others.
-
-See COMPONENT_DESIGN.md C11 and ARCHITECTURE.md Section 5.
 """
 
 from __future__ import annotations

@@ -2,8 +2,6 @@
 
 Each discovered plugin (via entry points) is represented by a PluginInfo
 object that holds its metadata before loading.
-
-See COMPONENT_DESIGN.md C09 and API.md Section 9.
 """
 
 from __future__ import annotations

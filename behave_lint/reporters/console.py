@@ -2,8 +2,6 @@
 
 Formats diagnostics with optional ANSI color support, file grouping,
 and a summary line with counts and timing.
-
-See SPECIFICATION.md Section 12 and API.md Section 8.
 """
 
 from __future__ import annotations

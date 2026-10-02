@@ -1,8 +1,6 @@
 """Reporter Manager and built-in reporters (console, JSON, Markdown, SARIF).
 
 Application layer — component C08.
-
-See COMPONENT_DESIGN.md Section 5 and API.md Section 8.
 """
 
 from __future__ import annotations

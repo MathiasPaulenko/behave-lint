@@ -2,8 +2,6 @@
 
 Produces a JSON object with schemaVersion, diagnostics array, and
 summary object. The schema is versioned independently of the tool.
-
-See SPECIFICATION.md Section 12 and API.md Section 8.
 """
 
 from __future__ import annotations

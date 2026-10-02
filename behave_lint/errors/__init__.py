@@ -2,7 +2,7 @@
 
 This module re-exports the exception hierarchy so that users and plugins
 can import from behave_lint.errors without depending on internal module
-paths. See API.md Section 11.
+paths.
 """
 
 from __future__ import annotations

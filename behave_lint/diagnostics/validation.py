@@ -2,8 +2,6 @@
 
 Validates that each diagnostic has required fields with correct types
 and values. Invalid diagnostics are dropped with a warning.
-
-See DIAGNOSTIC_ENGINE.md Section 2 (Validation stage).
 """
 
 from __future__ import annotations

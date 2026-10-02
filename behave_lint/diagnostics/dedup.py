@@ -3,8 +3,6 @@
 Deduplication removes diagnostics that are exact duplicates:
 same rule_id, same file_path, same line, same column, same message.
 
-See DIAGNOSTIC_ENGINE.md Section 8 (deduplication is optional but
-designed for v1).
 """
 
 from __future__ import annotations

@@ -1,7 +1,6 @@
 """Exception hierarchy for behave-lint.
 
-All custom exceptions inherit from BehaveLintError. See API.md Section 11
-and ARCHITECTURE.md Section 14 for the error handling design.
+All custom exceptions inherit from BehaveLintError.
 
 Hierarchy::
 

@@ -2,8 +2,6 @@
 
 These enums are the foundational vocabulary of behave-lint. They are used
 across all layers: configuration, rules, diagnostics, reporters, and CLI.
-
-See API.md Section 4 and RULE_TAXONOMY.md Sections 3-5.
 """
 
 from __future__ import annotations

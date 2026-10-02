@@ -1,8 +1,6 @@
 """Diagnostic model, collector, filtering, sorting.
 
 Domain layer — component C07.
-
-See COMPONENT_DESIGN.md Section 7 and DIAGNOSTIC_ENGINE.md.
 """
 
 from __future__ import annotations
