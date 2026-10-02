@@ -3,8 +3,6 @@
 Config is an immutable frozen dataclass created by the configuration
 loader. It is passed to the Linter at construction time and never
 mutated during a run.
-
-See API.md Section 4 and CONFIGURATION_SYSTEM.md.
 """
 
 from __future__ import annotations
@@ -12,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from behave_lint.models.enums import Severity
+from behave_lint.models.step_definition import StepDefinition
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,6 +28,8 @@ class Config:
         paths: Default paths to lint.
         exclude: Paths to exclude from linting.
         step_definitions: Step definitions directory, or None.
+        step_definition_patterns: Step patterns extracted from that
+            directory (populated by the engine at lint time).
         cache: Whether to enable caching.
         cache_dir: Cache directory path.
         plugins: Plugin enable/disable map.
@@ -47,6 +48,7 @@ class Config:
     paths: list[str] = field(default_factory=lambda: ["features/"])
     exclude: list[str] = field(default_factory=list)
     step_definitions: str | None = None
+    step_definition_patterns: tuple[StepDefinition, ...] = ()
     cache: bool = True
     cache_dir: str = ".behave-lint-cache"
     plugins: dict[str, bool] = field(default_factory=dict)

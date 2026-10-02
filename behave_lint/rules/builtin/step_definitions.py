@@ -2,8 +2,6 @@
 
 Rules that detect potential step definition issues by analyzing
 step text patterns. Default severity: WARNING.
-
-See RULE_TAXONOMY.md Section 3 and IMPLEMENTATION_ROADMAP.md E7.6.
 """
 
 from __future__ import annotations
@@ -16,10 +14,32 @@ from behave_lint.models.config import Config
 from behave_lint.models.diagnostic import Diagnostic
 from behave_lint.models.enums import AutoFixCapability, Category, Severity
 from behave_lint.models.rule_metadata import RuleExample, RuleMetadata
+from behave_lint.models.step_definition import StepDefinition
 from behave_lint.rules.base import Rule
 
 _PLACEHOLDER_PATTERN = re.compile(r"<[^>]+>")
 _PARAMETER_PATTERN = re.compile(r"\{[^}]+\}")
+
+
+def _iter_steps_with_keywords_in(scenario: Any) -> Any:
+    """Yield (step, effective_keyword) resolving And/But/* inheritance."""
+    current = "given"
+    for step in getattr(scenario, "steps", []):
+        kw = getattr(step, "keyword", "").strip().lower()
+        if kw in ("given", "when", "then"):
+            current = kw
+        yield step, current
+
+
+def _matching_definitions(
+    text: str, keyword: str, defs: tuple[StepDefinition, ...]
+) -> list[StepDefinition]:
+    """Return the loaded step definitions matching a step."""
+    return [
+        d
+        for d in defs
+        if d.matches_keyword(keyword) and d.matches(text)
+    ]
 
 
 class UndefinedStepPatternRule(Rule):
@@ -44,7 +64,8 @@ class UndefinedStepPatternRule(Rule):
         motivation=(
             "Placeholders in non-outline scenarios won't be "
             "substituted and will cause step matching failures "
-            "at runtime."
+            "at runtime. When step-definitions is configured, steps "
+            "with no matching Python definition are also flagged."
         ),
         since="0.5.0",
         examples=[
@@ -65,16 +86,18 @@ class UndefinedStepPatternRule(Rule):
 
     def check(self, feature: Any, config: Config) -> list[Diagnostic]:
         diagnostics: list[Diagnostic] = []
+        defs = config.step_definition_patterns
+        outline_scenarios = {
+            id(scenario)
+            for scenario in feature.all_scenarios()
+            if getattr(scenario, "examples", None) is not None
+        }
 
         for scenario in feature.all_scenarios():
-            is_outline = getattr(scenario, "examples", None) is not None
-            if is_outline:
-                continue
-
-            steps = getattr(scenario, "steps", [])
-            for step in steps:
+            is_outline = id(scenario) in outline_scenarios
+            for step, keyword in _iter_steps_with_keywords_in(scenario):
                 text = getattr(step, "name", "")
-                if _PLACEHOLDER_PATTERN.search(text):
+                if not is_outline and _PLACEHOLDER_PATTERN.search(text):
                     diagnostics.append(
                         self.diagnostic(
                             message=(
@@ -86,6 +109,26 @@ class UndefinedStepPatternRule(Rule):
                                 "Move this step to a Scenario Outline "
                                 "with Examples, or replace the "
                                 "placeholder with a concrete value."
+                            ),
+                        )
+                    )
+                    continue
+                if (
+                    defs
+                    and text
+                    and not _matching_definitions(text, keyword, defs)
+                ):
+                    diagnostics.append(
+                        self.diagnostic(
+                            message=(
+                                f"Step '{step.name}' has no matching "
+                                "step definition"
+                            ),
+                            node=step,
+                            suggestion=(
+                                "Check the step text against the "
+                                "definitions under the configured "
+                                "step-definitions path."
                             ),
                         )
                     )
@@ -132,27 +175,38 @@ class AmbiguousStepPatternRule(Rule):
 
     def check(self, feature: Any, config: Config) -> list[Diagnostic]:
         diagnostics: list[Diagnostic] = []
+        defs = config.step_definition_patterns
 
         for scenario in feature.all_scenarios():
-            steps = getattr(scenario, "steps", [])
-            for step in steps:
-                text = getattr(step, "name", "").strip().lower()
-                words = set(text.split())
-                if words & self._GENERIC_WORDS:
-                    diagnostics.append(
-                        self.diagnostic(
-                            message=(
-                                f"Step '{step.name}' uses generic "
-                                "text that may match multiple "
-                                "definitions"
-                            ),
-                            node=step,
-                            suggestion=(
-                                "Use more specific text to avoid "
-                                "ambiguous step matches."
-                            ),
-                        )
+            for step, keyword in _iter_steps_with_keywords_in(scenario):
+                text = getattr(step, "name", "")
+                words = set(text.strip().lower().split())
+                matches = (
+                    _matching_definitions(text, keyword, defs) if defs else []
+                )
+                unique_defs = {
+                    (d.file_path, d.line) for d in matches
+                }
+                ambiguous = len(unique_defs) > 1
+                if not ambiguous and not words & self._GENERIC_WORDS:
+                    continue
+                diagnostics.append(
+                    self.diagnostic(
+                        message=(
+                            f"Step '{step.name}' matches "
+                            f"{len(unique_defs)} step definitions"
+                            if ambiguous
+                            else f"Step '{step.name}' uses generic "
+                            "text that may match multiple "
+                            "definitions"
+                        ),
+                        node=step,
+                        suggestion=(
+                            "Use more specific text to avoid "
+                            "ambiguous step matches."
+                        ),
                     )
+                )
 
         return diagnostics
 
