@@ -7,6 +7,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-10-02
+
+### Fixed
+
+- **Rule parameters** — `[tool.behave-lint.rules.<RULE>]` tables were
+  never read: the configurable rules (BX001–BX006, BP003, BP004)
+  consulted a nonexistent `config.rules` field. They now read
+  `config.rule_params`, and kebab-case parameter keys (`max-steps`)
+  are normalized to `max_steps`.
+- **BC005 duplicate-feature-names** — cross-file rules received
+  `project=None` and never produced diagnostics. The engine now
+  builds a `Project` model containing every parsed feature.
+- **Cache path misattribution** — files sharing identical content
+  could report diagnostics under another file's path. Cached
+  diagnostics are re-stamped with the requesting file path, and the
+  tool version now participates in the config hash.
+- **Parse errors vs `--select`** — `B000` diagnostics were filtered
+  by rule selection; syntax errors are now always reported.
+- **Inline disables** — `# behave-lint: off BSEC001` did not match
+  the two-letter regex and silently disabled *all* rules. Longer
+  prefixes (BSEC, BI18N, BACC) are now supported. Inline disables
+  were also not wired at all: the engine now feeds file contents to
+  the collector.
+- **`exclude`** — configured excludes were dropped twice (CLI never
+  passed them, and the collector filtered against an empty list).
+  Plain directory prefixes like `features/wip/` now work, and file
+  discovery is extension case-insensitive.
+- **Configured defaults ignored** — `paths`, `output`, `output-file`
+  and `fail-on` from `pyproject.toml` were overridden by CLI defaults.
+  CLI flags now only override when explicitly provided.
+- **Group `style` matched BSEC rules** — prefix matching made the
+  `style` group select `BSEC*`. Group expansion now matches on the
+  rule's declared category.
+- **Plugin reporters/config** — `behave_lint.reporters` entry points
+  are registered with the reporter manager, and `behave_lint.config`
+  providers can inject configuration overrides. The `plugins` config
+  map now enables/disables plugins (`"*" = false` disables all
+  unlisted ones).
+- **Version drift** — `version.py`, `__init__.py`, the LSP server and
+  `pyproject.toml` disagreed. `version.py` is now the single source
+  of truth (`[tool.hatch.version]`).
+- **LSP** — server version is no longer hardcoded; `didChange` no
+  longer applies incremental edits twice (pygls already applies
+  them); quick-fix edits reaching the last line are clamped to the
+  document end.
+- **Watch mode** — delete/rename events now trigger re-linting, and
+  the exit code reflects the worst run, not the first.
+- **GitHub reporter** — file paths and messages are now escaped per
+  the workflow-command spec.
+
+### Added
+
+- New CLI flags: `--exclude`, `--dry-run` (preview fixes), `--jobs`
+  (thread pool size).
+- `--statistics` prints a summary (diagnostics, rules, cache
+  hits/misses); `--verbose` reports paths and plugins; `--color` /
+  `--no-color` control console coloring.
+- `extends` is now implemented: a `[tool.behave-lint]` file can
+  inherit from another config file (relative path, chained, with
+  cycle detection).
+- `max-warnings` is enforced: exit code 1 when warnings exceed it.
+- `BEHAVE_LINT_CONFIG` and `BEHAVE_LINT_TRACE` environment variables
+  are now honored.
+- New `complexity` rule group (was missing for the BX category).
+- `step-definitions` now works: point it at your `steps/` directory
+  and BD001 reports steps with no matching `@given`/`@when`/`@then`/
+  `@step` pattern, while BD002 reports steps matching more than one
+  definition. Definitions are extracted with `ast` — Python modules
+  are never imported.
+- SARIF output now emits real rule names/descriptions, and every
+  diagnostic carries a `doc_url` pointing at its rules page.
+
 ## [2.4.0] - 2025-07-04
 
 ### Added
