@@ -50,6 +50,7 @@ class WatchMode:
         self.paths = paths
         self.debounce_seconds = debounce_seconds
         self._last_run: float = 0.0
+        self._worst_exit_code: int = 0
 
     def run(self) -> int:
         """Start watching and linting.
@@ -73,7 +74,7 @@ class WatchMode:
             f"Watching {', '.join(self.paths)} for changes...\nPress Ctrl+C to stop.\n",
         )
 
-        exit_code = self._lint_once()
+        self._lint_once()
 
         handler = _FeatureFileHandler(self)
         observer = Observer()
@@ -91,7 +92,7 @@ class WatchMode:
             observer.stop()
         observer.join()
 
-        return exit_code
+        return self._worst_exit_code
 
     def _lint_once(self) -> int:
         """Run a single lint pass.
@@ -105,7 +106,9 @@ class WatchMode:
         self._last_run = now
 
         print(f"\n--- Linting at {time.strftime('%H:%M:%S')} ---")
-        return _run_lint(self.args, self.paths)
+        exit_code = _run_lint(self.args, self.paths)
+        self._worst_exit_code = max(self._worst_exit_code, exit_code)
+        return exit_code
 
     def on_change(self, file_path: str) -> None:
         """Called when a .feature file changes.
@@ -153,6 +156,32 @@ class _FeatureFileHandler(FileSystemEventHandler):
         src_path = getattr(event, "src_path", "")
         if src_path:
             self.watch_mode.on_change(str(src_path))
+
+    def on_deleted(self, event: object) -> None:
+        """Handle file deletion events.
+
+        Args:
+            event: File system event.
+        """
+        if getattr(event, "is_directory", False):
+            return
+        src_path = getattr(event, "src_path", "")
+        if src_path:
+            self.watch_mode.on_change(str(src_path))
+
+    def on_moved(self, event: object) -> None:
+        """Handle file move/rename events.
+
+        Args:
+            event: File system event.
+        """
+        if getattr(event, "is_directory", False):
+            return
+        for attr in ("dest_path", "src_path"):
+            path = getattr(event, attr, "")
+            if path:
+                self.watch_mode.on_change(str(path))
+                return
 
 
 __all__ = ["WatchMode"]
