@@ -6,8 +6,6 @@ sorted, deduplicated list ready for reporting.
 
 Pipeline: validate → filter (severity, disabled rules, excluded files,
 inline disables) → deduplicate → sort.
-
-See DIAGNOSTIC_ENGINE.md Section 2 and COMPONENT_DESIGN.md C07.
 """
 
 from __future__ import annotations
@@ -86,7 +84,7 @@ class DiagnosticCollector:
         result = filter_disabled_rules(result, self._config)
 
         # 4. Filter excluded files
-        result = filter_excluded_files(result, [])
+        result = filter_excluded_files(result, list(self._config.exclude))
 
         # 5. Filter inline disables
         if self._file_contents:

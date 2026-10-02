@@ -3,8 +3,6 @@
 Each filter is a pure function that takes a list of diagnostics and
 configuration, and returns the filtered list. Filters are composable
 and independent.
-
-See DIAGNOSTIC_ENGINE.md Section 8.
 """
 
 from __future__ import annotations
@@ -12,6 +10,7 @@ from __future__ import annotations
 import re
 from pathlib import PurePath
 
+from behave_lint.constants import PARSE_ERROR_RULE_ID
 from behave_lint.models.config import Config
 from behave_lint.models.diagnostic import Diagnostic
 from behave_lint.models.enums import Severity
@@ -19,7 +18,7 @@ from behave_lint.models.enums import Severity
 # --- Inline disable comment parsing ---
 
 _DISABLE_PATTERN = re.compile(
-    r"#\s*behave-lint:\s*(off|on)\s*([A-Z]{2}\d{3}(?:\s*,\s*[A-Z]{2}\d{3})*)?",
+    r"#\s*behave-lint:\s*(off|on)\s*([A-Z][A-Z0-9]*\d{3}(?:\s*,\s*[A-Z][A-Z0-9]*\d{3})*)?",
     re.IGNORECASE,
 )
 
@@ -178,8 +177,14 @@ def filter_disabled_rules(
 
     Returns:
         Filtered list — diagnostics from rules not enabled are removed.
+        Parse-error diagnostics (``B000``) always pass through: they
+        are produced by the parser, not by a selectable rule.
     """
-    return [d for d in diagnostics if config.is_rule_enabled(d.rule_id)]
+    return [
+        d
+        for d in diagnostics
+        if d.rule_id == PARSE_ERROR_RULE_ID or config.is_rule_enabled(d.rule_id)
+    ]
 
 
 def filter_excluded_files(

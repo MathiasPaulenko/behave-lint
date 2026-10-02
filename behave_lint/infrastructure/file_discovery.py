@@ -2,8 +2,6 @@
 
 Walks directories and collects .feature files, applying exclude patterns.
 Handles both individual files and directory trees.
-
-See COMPONENT_DESIGN.md C10 and ARCHITECTURE.md Section 11.
 """
 
 from __future__ import annotations
@@ -39,7 +37,9 @@ def discover_files(
             if _is_feature_file(path) and not _is_excluded(path, exclude_patterns):
                 result.add(str(path))
         elif path.is_dir():
-            for found in path.rglob("*.feature"):
+            for found in path.rglob("*"):
+                if not found.is_file() or not _is_feature_file(found):
+                    continue
                 if not _is_excluded(found, exclude_patterns):
                     result.add(str(found))
 
@@ -53,17 +53,21 @@ def _is_feature_file(path: Path) -> bool:
         path: Path to check.
 
     Returns:
-        True if the file has a .feature extension.
+        True if the file has a .feature extension (case-insensitive).
     """
-    return path.suffix == ".feature"
+    return path.suffix.lower() == ".feature"
 
 
 def _is_excluded(path: Path, patterns: list[str]) -> bool:
     """Check if a path matches any exclude pattern.
 
+    Patterns may be glob patterns (e.g. ``**/vendor/**``) or plain
+    directory/file prefixes (e.g. ``features/wip/``), which match the
+    path itself and everything beneath it.
+
     Args:
         path: Path to check.
-        patterns: Glob patterns to match against.
+        patterns: Glob patterns or path prefixes to match against.
 
     Returns:
         True if the path matches any pattern.
@@ -72,11 +76,19 @@ def _is_excluded(path: Path, patterns: list[str]) -> bool:
         return False
 
     path_str = str(path).replace("\\", "/")
+    name = path.name
     for pattern in patterns:
         normalized = pattern.replace("\\", "/")
         if fnmatch.fnmatch(path_str, normalized):
             return True
-        if fnmatch.fnmatch(path.name, normalized):
+        if fnmatch.fnmatch(name, normalized):
+            return True
+        # Plain prefix match: "features/wip/" or "features/wip" excludes
+        # that path and anything underneath it.
+        prefix = normalized.rstrip("/")
+        if prefix and (
+            path_str == prefix or path_str.startswith(prefix + "/")
+        ):
             return True
     return False
 
