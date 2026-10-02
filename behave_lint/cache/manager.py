@@ -33,6 +33,7 @@ from typing import Any
 from behave_lint.exceptions import CacheError
 from behave_lint.models.config import Config
 from behave_lint.models.diagnostic import Diagnostic
+from behave_lint.version import __version__
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +62,7 @@ def _compute_config_hash(config: Config) -> str:
         Hexadecimal hash string.
     """
     relevant = {
+        "tool_version": __version__,
         "select": sorted(config.select),
         "ignore": sorted(config.ignore),
         "profile": config.profile,
@@ -70,6 +72,10 @@ def _compute_config_hash(config: Config) -> str:
         },
         "rule_params": config.rule_params,
         "fail_on": config.fail_on.value,
+        "step_definitions": [
+            (d.keyword, d.pattern, d.file_path, d.line)
+            for d in config.step_definition_patterns
+        ],
     }
     raw = json.dumps(relevant, sort_keys=True, default=str)
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
@@ -164,7 +170,12 @@ class CacheManager:
         if entry is not None and entry.config_hash == self._config_hash:
             self._stats.hits += 1
             logger.debug("Cache hit for %s (hash=%s)", file_path, file_hash[:8])
-            return list(entry.diagnostics)
+            # Diagnostics are stored with the file path of whichever file
+            # first produced this content hash. Re-stamp the path so a
+            # different file with identical content reports itself.
+            from dataclasses import replace
+
+            return [replace(d, file_path=file_path) for d in entry.diagnostics]
         self._stats.misses += 1
         logger.debug("Cache miss for %s (hash=%s)", file_path, file_hash[:8])
         return None
