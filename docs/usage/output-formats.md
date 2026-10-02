@@ -42,7 +42,7 @@ behave-lint features/ --output json --output-file report.json
   "schemaVersion": "1.0.0",
   "tool": {
     "name": "behave-lint",
-    "version": "0.9.0"
+    "version": "2.4.1"
   },
   "timestamp": "2024-01-15T10:30:00+00:00",
   "diagnostics": [
@@ -57,7 +57,7 @@ behave-lint features/ --output json --output-file report.json
       "end_line": 20,
       "end_column": 1,
       "suggestion": "Rename one of the scenarios.",
-      "doc_url": "https://github.com/MathiasPaulenko/behave-lint/blob/main/docs/rules/correctness.md"
+      "doc_url": "https://mathiaspaulenko.github.io/behave-lint/rules/correctness/#bc001-duplicate-scenario-names"
     }
   ],
   "summary": {
@@ -67,7 +67,7 @@ behave-lint features/ --output json --output-file report.json
     "error_count": 1,
     "warning_count": 1,
     "info_count": 1,
-    "rules_executed": 41,
+    "rules_executed": 50,
     "duration_ms": 42.5,
     "cache_hits": 3,
     "cache_misses": 2
@@ -142,7 +142,7 @@ behave-lint features/ --output sarif --output-file behave-lint.sarif
       "tool": {
         "driver": {
           "name": "behave-lint",
-          "version": "0.9.0",
+          "version": "2.4.1",
           "informationUri": "https://github.com/MathiasPaulenko/behave-lint",
           "rules": [...]
         }

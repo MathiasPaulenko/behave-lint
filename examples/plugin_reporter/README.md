@@ -1,5 +1,14 @@
 # Plugin Reporter Example
 
-A complete example of a custom reporter plugin for `behave-lint`.
+A custom reporter plugin that adds a `csv` output format.
 
-_Implementation pending — example files will be added in M9._
+## Install and run
+
+```bash
+pip install ./examples/plugin_reporter
+behave-lint features/ --output csv
+```
+
+The plugin exposes a `Reporter` subclass through the
+`behave_lint.reporters` entry point group. The entry point name
+(`csv`) becomes the format name used with `--output`.

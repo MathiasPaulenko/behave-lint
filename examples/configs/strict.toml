@@ -1,0 +1,6 @@
+# Strict profile: every rule enabled, errors only fail the build
+# when an error-severity diagnostic fires.
+[tool.behave-lint]
+profile = "strict"
+fail-on = "error"
+max-warnings = 20

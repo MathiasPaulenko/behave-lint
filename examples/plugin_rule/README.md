@@ -1,5 +1,5 @@
 # Plugin Rule Example
 
-A complete example of a custom rule plugin for `behave-lint`.
-
-_Implementation pending — example files will be added in M9._
+Rule plugins are covered by the complete [custom-rules](../custom-rules/)
+example, which shows a `Rule` subclass registered through the
+`behave_lint.rules` entry point group plus a feature file exercising it.

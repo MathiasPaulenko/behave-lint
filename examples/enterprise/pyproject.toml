@@ -1,0 +1,13 @@
+[tool.behave-lint]
+profile = "recommended"
+paths = ["features/"]
+exclude = ["features/legacy/"]
+fail-on = "error"
+max-warnings = 50
+output = "console"
+
+[tool.behave-lint.severity]
+BD003 = "off"
+
+[tool.behave-lint.rules.BX002]
+max-scenarios = 30

@@ -1,0 +1,3 @@
+[tool.behave-lint]
+paths = ["features/"]
+profile = "recommended"

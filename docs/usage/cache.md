@@ -36,9 +36,9 @@ behave-lint --clear-cache features/
 ### Configuration File
 
 ```toml
-[tool.behave_lint]
+[tool.behave-lint]
 cache = true
-cache_dir = ".behave-lint-cache"
+cache-dir = ".behave-lint-cache"
 ```
 
 ### Environment Variables
@@ -65,18 +65,20 @@ The cache is automatically invalidated when:
 - **Auto-fix mode** — the cache is automatically disabled when using
   `--fix` or `--unsafe-fixes`, since fixes require rule execution to
   collect `FixEdit` objects.
-- **Cross-file rules** — cross-file rules (e.g., consistency rules) are
-  not cached individually. They run on every uncached run.
+- **Cross-file rules** — diagnostics from cross-file rules (e.g.
+  BC005 duplicate-feature-names) are never cached, since they depend
+  on other files' contents. When a cross-file rule is enabled, all
+  files are still parsed on every run so the project model is
+  complete; the cache only skips single-file rule execution.
 - **Cache size** — the cache grows with the number of unique file
   versions. Use `--clear-cache` periodically or add the cache directory
   to `.gitignore`.
 
 ## Statistics
 
-Cache hits and misses are reported in the summary when using
-`--statistics`:
+Cache hits and misses are reported when using `--statistics`:
 
 ```
-Found 13 diagnostics (6 warning, 7 info) in 10 files in 0.02s.
-Cache: 8 hits, 2 misses.
+Statistics: 13 diagnostics (0 error, 6 warning, 7 info), 10 files,
+50 rules, 21.4 ms. Cache: 8 hits, 2 misses.
 ```

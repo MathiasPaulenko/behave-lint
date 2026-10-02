@@ -10,7 +10,7 @@ behave-lint [OPTIONS] [PATHS]...
 
 | Argument | Description |
 |----------|-------------|
-| `PATHS`  | Files or directories to lint. Defaults to current directory. |
+| `PATHS`  | Files or directories to lint. Defaults to the `paths` configuration value (`features/` by default). |
 
 ## Rule selection
 
@@ -18,8 +18,10 @@ behave-lint [OPTIONS] [PATHS]...
 |--------|-------------|
 | `--select RULES` | Enable specific rules (comma-separated). Overrides configuration. |
 | `--ignore RULES` | Disable specific rules (comma-separated). Overrides configuration. |
+| `--exclude PATTERNS` | Exclude files/dirs (comma-separated globs or directory prefixes). Added to the configured `exclude` list. |
 | `--profile NAME` | Use a built-in profile: `recommended`, `strict`, `minimal`. |
-| `--fail-on LEVEL` | Exit with non-zero code if diagnostics at or above this severity are found. One of `error`, `warning`, `info`. Default: `warning`. |
+| `--group GROUPS` | Select rules by group (comma-separated): `correctness`, `style`, `pedantic`, `step-definitions`, `consistency`, `complexity`, `security`, `i18n`, `accessibility`, or tag groups (`naming`, `tags`, `steps`, `background`, `description`, `documentation`, `formatting`, `examples`, `scenarios`, `readability`). |
+| `--fail-on LEVEL` | Exit with non-zero code if diagnostics at or above this severity are found. One of `error`, `warning`, `info`, `off`. Default: `warning`. |
 
 ## Output
 
@@ -30,8 +32,8 @@ behave-lint [OPTIONS] [PATHS]...
 | `--color` | Force enable colored output. |
 | `--no-color` | Force disable colored output. |
 | `--verbose` | Show progress and timing information. |
-| `--quiet` | Suppress all output except diagnostics. |
-| `--statistics` | Show rule statistics summary. |
+| `--quiet` | Suppress all output, including diagnostics. The exit code still applies. |
+| `--statistics` | Show a statistics summary (diagnostics, rules executed, cache hits/misses). |
 
 ## Configuration
 
@@ -47,12 +49,19 @@ behave-lint [OPTIONS] [PATHS]...
 |--------|-------------|
 | `--fix` | Apply safe auto-fixes to `.feature` files. |
 | `--unsafe-fixes` | Also apply unsafe auto-fixes (use with caution). |
+| `--dry-run` | Preview fixes without writing any files. |
 
 ## Watch mode
 
 | Option | Description |
 |--------|-------------|
 | `--watch` | Watch for file changes and re-lint automatically. Requires `watchdog` (`pip install behave-lint[watch]`). |
+
+## Performance
+
+|| Option | Description |
+||--------|-------------|
+|| `--jobs N` | Thread pool size for rule execution. Default: CPU count. |
 
 ## Informational
 
@@ -67,9 +76,10 @@ behave-lint [OPTIONS] [PATHS]...
 
 | Code | Meaning |
 |------|---------|
-| 0 | No diagnostics at or above the `--fail-on` threshold. |
-| 1 | Diagnostics found at or above the threshold. |
-| 2 | Internal error (invalid arguments, parse failure, etc.). |
+| 0 | No diagnostics at or above the `--fail-on` threshold, and the warning count is within `max-warnings`. |
+| 1 | Diagnostics found at or above the threshold, or warnings above `max-warnings`. Syntax/parse errors (`B000`) are errors and therefore also exit 1. |
+| 2 | Configuration or user error (invalid config file, unknown option, unknown rule). |
+| 3 | Internal error — indicates a bug in behave-lint. |
 
 ## Examples
 

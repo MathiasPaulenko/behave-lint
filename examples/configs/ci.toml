@@ -1,0 +1,6 @@
+# CI-oriented configuration: JSON output to a file, cache disabled.
+[tool.behave-lint]
+profile = "recommended"
+output = "json"
+output-file = "reports/behave-lint.json"
+exclude = ["features/legacy/"]

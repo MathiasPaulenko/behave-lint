@@ -23,7 +23,7 @@ real-time feedback during development.
 | Duplicate step definitions cause silent match failures | **BD001** detects duplicates at lint time |
 | Inconsistent tag casing breaks CI filters | **BS001** auto-fixes to `snake_case` |
 | Trailing punctuation in steps clutters reports | **BD005** strips it automatically |
-| No Given-When-Then ordering enforcement | **BC001** catches structural violations |
+| No Given-When-Then ordering enforcement | **BS002** catches out-of-order steps |
 | Feature files grow unchecked in complexity | **BX001-BX005** enforce limits |
 | Hardcoded passwords leak into version control | **BSEC001** flags hardcoded secrets |
 | Ableist language goes unnoticed in tests | **BACC001** suggests inclusive alternatives |
@@ -121,12 +121,18 @@ behave-lint --explain BC001
 | BD004 | Convert `{param}` → `<param>` | Safe |
 | BD005 | Remove trailing punctuation from steps | Safe |
 | BS001 | Convert tags to `snake_case` | Safe |
+| BS003 | Normalize step phrasing | Safe |
+| BS006 | Normalize step keyword casing | Safe |
+| BS007 | Remove trailing whitespace | Safe |
+| BS008 | Convert tabs to spaces | Safe |
+| BS002 | Reorder steps to Given-When-Then | Unsafe |
+| BS004 | Rename custom Background names | Unsafe |
 | BS005 | Insert missing Feature description template | Unsafe |
 | BP001 | Insert `@smoke` tag on untagged scenarios | Unsafe |
 | BP005 | Append `Valid values` to unnamed Examples | Unsafe |
 | BP006 | Insert As a / I want / So that description | Unsafe |
 
-See the [Auto-Fix guide](docs/usage/auto-fix.md) for the full list.
+See the [Auto-Fix guide](docs/usage/auto-fix.md) for details.
 
 ## Configuration
 
@@ -163,7 +169,7 @@ options.
 
 ```yaml
 - run: pip install behave-lint
-- run: behave-lint features/ --sarif --output-file behave-lint.sarif
+- run: behave-lint features/ --output sarif --output-file behave-lint.sarif
 - uses: github/codeql-action/upload-sarif@v3
   with:
     sarif_file: behave-lint.sarif
@@ -182,8 +188,8 @@ See the [CI/CD guide](docs/guides/ci-cd.md) for full workflows.
 | Format | Flag | Use case |
 |--------|------|----------|
 | Console | `--output console` | Local development (default) |
-| JSON | `--json` | CI pipelines, custom tooling |
-| SARIF | `--sarif` | GitHub Code Scanning |
+| JSON | `--output json` | CI pipelines, custom tooling |
+| SARIF | `--output sarif` | GitHub Code Scanning |
 | Markdown | `--output markdown` | PR comments, reports |
 | GitHub | `--output github` | Inline PR annotations |
 
@@ -238,14 +244,11 @@ Full documentation is hosted at **[mathiaspaulenko.github.io/behave-lint](https:
 
 ### Design documents
 
-- [Vision](ref/VISION.md) — project vision and mission
-- [Specification](ref/SPECIFICATION.md) — full feature specification
-- [Architecture](ref/ARCHITECTURE.md) — internal architecture
-- [API](ref/API.md) — public API specification
-- [Rule Engine Design](ref/RULE_ENGINE.md) — rule lifecycle and execution
-- [Rule Taxonomy](ref/RULE_TAXONOMY.md) — rule categories and metadata
-- [Configuration System](ref/CONFIGURATION_SYSTEM.md) — configuration schema
-- [Implementation Roadmap](ref/IMPLEMENTATION_ROADMAP.md) — milestone plan
+- [Documentation site](https://mathiaspaulenko.github.io/behave-lint/) — full user documentation
+- [Rules index](docs/rules/index.md) — all rules by category
+- [Configuration](docs/usage/configuration.md) — every configuration option
+- [CLI reference](docs/usage/cli-reference.md) — all command-line options
+- [Roadmap](docs/roadmap.md) — implemented milestones and next steps
 
 ## Development
 

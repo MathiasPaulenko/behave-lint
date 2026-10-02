@@ -65,9 +65,13 @@ behave-lint:
     - pip install behave-lint
     - behave-lint features/ --output json --output-file behave-lint-report.json
   artifacts:
-    reports:
-      junit: behave-lint-report.json
+    paths:
+      - behave-lint-report.json
+    when: always
 ```
+
+Note: the JSON report is not a JUnit file — it is uploaded as a plain
+artifact. GitLab does not render it inline in merge requests.
 
 ## Pre-merge gate
 

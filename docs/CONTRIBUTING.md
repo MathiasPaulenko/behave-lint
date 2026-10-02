@@ -34,7 +34,7 @@ uv run pytest -m unit
 uv run pytest -m integration
 
 # With coverage
-uv run pytest --cov=src
+uv run pytest --cov=behave_lint
 
 # Parallel execution
 uv run pytest -n auto
@@ -44,13 +44,13 @@ uv run pytest -n auto
 
 ```bash
 # Format
-uv run ruff format src/ tests/
+uv run ruff format behave_lint/ tests/
 
 # Lint
-uv run ruff check src/ tests/
+uv run ruff check behave_lint/ tests/
 
 # Type check
-uv run mypy src/
+uv run mypy behave_lint/
 ```
 
 ## How to Contribute
@@ -122,4 +122,4 @@ template in the repository for the review checklist.
 ## License
 
 By contributing, you agree that your contributions will be licensed
-under the [MIT License](LICENSE).
+under the [MIT License](https://github.com/MathiasPaulenko/behave-lint/blob/main/LICENSE).

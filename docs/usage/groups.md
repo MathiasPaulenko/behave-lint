@@ -60,6 +60,7 @@ explicitly selected rules, not replacing them.
 | `pedantic` | BP | Strict best practices (opt-in) |
 | `step-definitions` | BD | Cross-reference with step defs |
 | `consistency` | BK | Cross-file consistency |
+| `complexity` | BX | Overly complex specifications |
 | `security` | BSEC | Security and sensitive data |
 | `i18n` | BI18N | Internationalization issues |
 | `accessibility` | BACC | Accessibility and inclusive design |

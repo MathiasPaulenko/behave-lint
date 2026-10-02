@@ -11,6 +11,9 @@ behave-lint features/ --fix
 
 # Apply safe and unsafe fixes
 behave-lint features/ --fix --unsafe-fixes
+
+# Preview fixes without modifying files
+behave-lint features/ --fix --dry-run
 ```
 
 ## Safe vs. unsafe fixes
@@ -30,6 +33,7 @@ behave-lint features/ --fix --unsafe-fixes
 | **BD004** (step-parameter-convention) | Convert `{param}` to `<param>` when both conventions are mixed. |
 | **BD005** (step-trailing-punctuation) | Remove trailing punctuation from step text. |
 | **BS001** (tag-casing) | Convert tags to lowercase `snake_case`. |
+| **BS003** (step-phrasing) | Normalize step phrasing (e.g., first-person rewrites). |
 | **BS006** (step-keyword-casing) | Capitalize step keywords (e.g., `given` → `Given`). |
 | **BS007** (trailing-whitespace) | Remove trailing whitespace from lines. |
 | **BS008** (tab-indentation) | Replace tab indentation with spaces (2 per level). |
@@ -39,7 +43,6 @@ behave-lint features/ --fix --unsafe-fixes
 | Rule | Fix |
 |------|-----|
 | **BS002** (keyword-ordering) | Reorder steps to Given → When → Then. |
-| **BS003** (step-phrasing) | Rewrite first-person steps to third-person. |
 | **BS004** (background-name) | Insert `Background: Common setup` as a placeholder name. |
 | **BS005** (feature-description) | Insert a template As a / I want / So that description. |
 | **BP001** (missing-scenario-tags) | Insert `@smoke` tag before scenarios without tags. |

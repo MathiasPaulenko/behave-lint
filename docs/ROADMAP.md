@@ -4,7 +4,7 @@ This document summarizes the implementation roadmap.
 
 ## Current Status
 
-**Stable** — v2.4.0 released. 50 built-in rules across 9 categories
+**Stable** — v2.5.0 released. 50 built-in rules across 9 categories
 (correctness, style, complexity, consistency, pedantic, step definitions,
 security, i18n, accessibility), auto-fix (14 rules), profiles, groups,
 incremental cache, cookiecutter plugin template, watch mode, plugins,

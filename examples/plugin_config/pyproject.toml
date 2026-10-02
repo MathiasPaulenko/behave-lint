@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "behave-lint-team-config"
+version = "0.1.0"
+description = "Example config-provider plugin for behave-lint"
+requires-python = ">=3.11"
+dependencies = ["behave-lint"]
+
+[project.entry-points."behave_lint.config"]
+team-defaults = "behave_lint_teamcfg:team_defaults"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/behave_lint_teamcfg"]

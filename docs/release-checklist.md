@@ -5,11 +5,12 @@ Pre-release checklist for `behave-lint` releases.
 ## Pre-release
 
 - [ ] All tests pass: `uv run pytest -m "not performance and not slow"`
-- [ ] Lint clean: `uv run ruff check src/ tests/`
-- [ ] Type check clean: `uv run mypy src/`
+- [ ] Lint clean: `uv run ruff check behave_lint/ tests/`
+- [ ] Type check clean: `uv run mypy behave_lint/`
 - [ ] Docs build clean: `uv run mkdocs build --strict`
-- [ ] Version bumped in `pyproject.toml`, `src/behave_lint/version.py`,
-      `src/behave_lint/__init__.py`
+- [ ] Version bumped in `behave_lint/version.py` (single source of truth, picked up
+      by `pyproject.toml`'s `[tool.hatch.version]` and re-exported by
+      `behave_lint/__init__.py`)
 - [ ] `CHANGELOG.md` updated with release date and entries
 - [ ] `README.md` is up to date
 - [ ] All example projects in `examples/` are runnable

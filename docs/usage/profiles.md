@@ -75,6 +75,6 @@ When `--ignore` is specified, it replaces the profile's ignore list.
 
 ## Default behavior
 
-If no profile is specified, `behave-lint` enables all non-experimental,
-non-deprecated rules by default (equivalent to `recommended` without
-the pedantic exclusions).
+If no profile is specified, `behave-lint` enables **all** rules,
+including the pedantic (BP) category. Use `--profile recommended` to
+exclude pedantic rules.

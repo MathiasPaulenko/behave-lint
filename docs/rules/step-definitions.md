@@ -13,6 +13,12 @@ Detects steps that use placeholder syntax (`<value>`) outside of
 Scenario Outline contexts, which likely indicates a missing or incorrect
 step definition.
 
+When `step-definitions` is configured, BD001 also reports steps whose
+text does not match any `@given`/`@when`/`@then`/`@step` pattern found
+in that directory (matched on the effective keyword — `And`/`But`
+inherit the previous keyword). Step definitions are extracted with
+`ast` parsing, never executed.
+
 **Tags:** `steps`, `definitions`, `placeholders`
 
 **Since:** 0.5.0
@@ -55,6 +61,10 @@ step definition.
 
 Detects steps with very generic text that could match multiple step
 definitions, leading to ambiguous matches at runtime.
+
+When `step-definitions` is configured, BD002 also reports steps that
+match more than one loaded definition (a real ambiguity, not just a
+heuristic).
 
 **Tags:** `steps`, `definitions`, `ambiguous`
 

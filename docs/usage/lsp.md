@@ -133,4 +133,11 @@ vim.lsp.config('behave-lint', {
 
 ## Limitations
 
-- None currently
+- Diagnostics are computed per open document. Cross-file rules
+  (e.g. BC005 duplicate feature names) only see the file being
+  linted, not the full workspace.
+- Quick fixes are whole-line replacements; a fix touching the last
+  line of a file requires the file to end with a newline to apply
+  cleanly.
+- Workspace configuration is limited to `select`, `ignore`,
+  `profile`, `group`, `severityOverrides` and `ruleParams`.

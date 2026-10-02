@@ -19,9 +19,9 @@ requirement.
 
 | Version | Status |
 |---|---|
-| 0.1.x – 0.x | Active (runtime dependency) |
+| 1.x | Active (runtime dependency, `>=1.0,<2`) |
 
-**Rationale:** `behave-model` is the only runtime dependency. The
+**Rationale:** `behave-model` is the main parsing dependency. The
 version range is pinned to a compatible major version.
 
 ## Operating Systems

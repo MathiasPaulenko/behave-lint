@@ -4,8 +4,8 @@
 
 | Version | Supported | Status |
 |---|---|---|
-| 0.1.x | Yes | Pre-alpha |
-| < 0.1 | No | Unreleased |
+| 2.4.x | Yes | Current stable |
+| < 2.4 | No | Older releases |
 
 ## Reporting a Vulnerability
 
@@ -29,9 +29,9 @@ produces reports. It does not:
 - Use `eval` or `exec`
 - Spawn subprocesses
 
-Step definition analysis uses Python's `ast` module (read-only
-parsing, no code execution). See ref/ARCHITECTURE.md Section 19 for
-full details.
+Feature files are parsed with `behave-model` (read-only parsing, no
+code execution). Step-definition rules analyze step text patterns only
+— Python step definition files are never imported or executed.
 
 ## Plugin Security
 

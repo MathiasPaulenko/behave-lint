@@ -9,7 +9,7 @@ configuration providers.
 |------|-------------------|-------------|
 | Rules | `behave_lint.rules` | Custom lint rules |
 | Reporters | `behave_lint.reporters` | Custom output formats |
-| Config | `behave_lint.config_sources` | Configuration providers |
+| Config | `behave_lint.config` | Configuration providers |
 
 ## Quick start with the cookiecutter template
 
@@ -111,7 +111,24 @@ behave-lint features/ --output csv
 Plugins are loaded in isolated mode — a failure in one plugin does not
 crash the linter. Errors are reported as warnings.
 
+### Configuration providers
+
+A config plugin provides a callable returning a dict of configuration
+overrides, applied before CLI flags:
+
+```python
+def my_defaults() -> dict[str, object]:
+    return {"profile": "recommended", "exclude": ["features/vendor/"]}
+```
+
+```toml
+[project.entry-points."behave_lint.config"]
+my-defaults = "my_plugin.config:my_defaults"
+```
+
 ## Discovery
 
 `behave-lint` discovers plugins via Python entry points. Ensure your
 plugin package is installed in the same environment as `behave-lint`.
+Installed plugins can be disabled per project with the `plugins`
+configuration map (`plugins = { "my-plugin" = false }`).

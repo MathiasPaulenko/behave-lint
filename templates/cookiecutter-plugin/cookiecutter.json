@@ -6,7 +6,7 @@
     "rule_name": "my-custom-rule",
     "rule_title": "My custom rule",
     "rule_description": "Detects something that needs linting.",
-    "category": ["style", "correctness", "pedantic", "complexity", "consistency", "step_definitions"],
+    "category": ["style", "correctness", "pedantic", "complexity", "consistency", "step_definitions", "security", "i18n", "accessibility"],
     "severity": ["warning", "error", "info"],
     "author_name": "Your Name",
     "author_email": "you@example.com",

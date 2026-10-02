@@ -8,7 +8,14 @@ A minimal Behave project demonstrating basic `behave-lint` usage.
 minimal/
   features/
     login.feature
-  behave-lint.toml
+  pyproject.toml
 ```
 
-_Implementation pending — example files will be added in M4._
+## Run
+
+```bash
+cd minimal
+behave-lint
+```
+
+No positional argument is needed: `paths` comes from `pyproject.toml`.

@@ -55,7 +55,8 @@ behave-lint --config /path/to/pyproject.toml features/
 | `select` | list[str] | `[]` (all) | Rule IDs to enable. Empty means all defaults. |
 | `ignore` | list[str] | `[]` | Rule IDs to disable. |
 | `profile` | str | `"none"` | Built-in profile: `recommended`, `strict`, `minimal`. See [Profiles](profiles.md). |
-| `exclude` | list[str] | `[]` | Paths to exclude from linting. |
+| `group` | list[str] or str | `[]` | Rule groups to enable (additive to `select`). See [Groups](groups.md). |
+| `exclude` | list[str] | `[]` | Paths to exclude from linting (globs or directory prefixes). |
 
 ### Severity
 
@@ -115,8 +116,8 @@ BP004 = { min-length = 10 }
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `paths` | list[str] | `["features/"]` | Default paths to lint. |
-| `step-definitions` | str | `null` | Step definitions directory. |
+| `paths` | list[str] | `["features/"]` | Default paths to lint when no positional arguments are given. |
+| `step-definitions` | str | `null` | Directory (or file) of Python step definitions. When set, BD001 flags steps with no matching definition and BD002 flags steps matching multiple definitions. Patterns are extracted via `ast` parsing — modules are never imported or executed. |
 
 ### Cache
 
@@ -129,18 +130,27 @@ BP004 = { min-length = 10 }
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `plugins` | dict | `{}` | Plugin enable/disable map. |
+| `plugins` | dict | `{}` | Plugin enable/disable map, keyed by entry point name. |
 
 ```toml
 [tool.behave-lint]
-plugins = { "my-plugin" = true, "deprecated-plugin" = false }
+plugins = { "deprecated-plugin" = false }
+
+# Enable only "my-plugin", disable everything else:
+plugins = { "*" = false, "my-plugin" = true }
 ```
 
 ### Extends
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `extends` | str | `null` | Path to another config file to extend. |
+| `extends` | str | `null` | Path to a parent config file to extend (relative to the file that declares it). The parent may be another `pyproject.toml` (its `[tool.behave-lint]` section is used) or a plain TOML file whose top-level keys are the config. Parent values act as defaults: the local file wins per key, and chains are supported. Cyclic or missing parents are configuration errors. |
+
+```toml
+# pyproject.toml
+[tool.behave-lint]
+extends = "../shared-lint.toml"
+```
 
 ## Environment variables
 
@@ -153,6 +163,10 @@ All environment variables use the `BEHAVE_LINT_` prefix:
 | `BEHAVE_LINT_NO_CACHE` | `cache` | bool (inverted) | Set to `1`/`true`/`yes` to disable cache. |
 | `BEHAVE_LINT_CACHE_DIR` | `cache_dir` | str | Cache directory. |
 | `BEHAVE_LINT_FAIL_ON` | `fail_on` | str | Fail-on severity level. |
+| `BEHAVE_LINT_PROFILE` | `profile` | str | Built-in profile name. |
+| `BEHAVE_LINT_GROUP` | `group` | str | Comma-separated rule groups. |
+| `BEHAVE_LINT_CONFIG` | — | str | Path to the configuration file (used when `--config` is absent). |
+| `BEHAVE_LINT_TRACE` | — | bool | Set to `1`/`true`/`yes` for debug logging. |
 
 Example:
 
@@ -170,6 +184,13 @@ Some keys accept both kebab-case and snake_case in TOML:
 | `step-definitions` | `step_definitions` |
 | `cache-dir` | `cache_dir` |
 | `fail-on` | `fail_on` |
+| `max-warnings` | `max_warnings` |
+| `severity` | `severity_overrides` |
+| `rules` | `rule_params` |
+
+Parameter keys inside `[tool.behave-lint.rules.<RULE>]` tables may be
+written in kebab-case (`max-steps`) or snake_case (`max_steps`) — both
+are normalized to snake_case before reaching the rules.
 
 ## CLI overrides
 

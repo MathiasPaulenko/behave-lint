@@ -1,5 +1,14 @@
 # Plugin Config Example
 
-A complete example of a custom configuration source plugin for `behave-lint`.
+A config-provider plugin that injects organization-wide defaults.
 
-_Implementation pending — example files will be added in M9._
+## Install and run
+
+```bash
+pip install ./examples/plugin_config
+behave-lint features/
+```
+
+The plugin exposes a callable through the `behave_lint.config` entry
+point group. The callable returns a dict of configuration overrides;
+they sit below CLI flags but above `pyproject.toml` and profiles.

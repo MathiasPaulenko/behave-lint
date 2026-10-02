@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "behave-lint-csv-reporter"
+version = "0.1.0"
+description = "Example CSV reporter plugin for behave-lint"
+requires-python = ">=3.11"
+dependencies = ["behave-lint"]
+
+[project.entry-points."behave_lint.reporters"]
+csv = "behave_lint_csv:CSVReporter"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/behave_lint_csv"]

@@ -6,10 +6,15 @@ Runnable example projects demonstrating `behave-lint` features.
 
 | Example | Description |
 |---------|-------------|
+| [minimal](minimal/) | Single feature file + minimal `pyproject.toml` |
 | [basic-usage](basic-usage/) | Minimal project with configuration and clean feature files |
 | [auto-fix](auto-fix/) | Before/after feature files showing `--fix` in action |
 | [ci-cd](ci-cd/) | GitHub Actions workflow with SARIF upload |
+| [configs](configs/) | Sample `[tool.behave-lint]` configurations |
+| [enterprise](enterprise/) | Stricter config: excludes, severity overrides, warning budget |
 | [custom-rules](custom-rules/) | Custom rule plugin with entry point registration |
+| [plugin_reporter](plugin_reporter/) | Reporter plugin adding a `csv` output format |
+| [plugin_config](plugin_config/) | Config-provider plugin injecting shared defaults |
 
 ## Prerequisites
 
