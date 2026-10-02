@@ -3,8 +3,8 @@
 This package provides static analysis for Behave BDD projects, consuming
 behave-model as its single source of truth.
 
-Public API is defined in API.md. Only names explicitly exported here are
-considered stable and publicly supported.
+Only names explicitly exported here are considered stable and publicly
+supported.
 """
 
 from __future__ import annotations
@@ -23,8 +23,7 @@ from behave_lint.models import (
     RuleMetadata,
     Severity,
 )
-
-__version__ = "2.4.1"
+from behave_lint.version import __version__
 
 __all__ = [
     "AutoFixCapability",

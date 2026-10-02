@@ -2,9 +2,12 @@
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.version]
+path = "behave_lint/version.py"
+
 [project]
 name = "behave-lint"
-version = "2.4.1"
+dynamic = ["version"]
 description = "A fast, opinionated, extensible linter for Gherkin .feature files and Behave test suites."
 readme = "README.md"
 license = "MIT"
@@ -94,11 +97,10 @@ Changelog = "https://github.com/MathiasPaulenko/behave-lint/blob/main/docs/CHANG
 behave-lint = "behave_lint.cli:run"
 behave-lint-lsp = "behave_lint.lsp.server:main"
 
-[project.entry-points."behave_lint.rules"]
-# Built-in rules registered here during M7
-
-[project.entry-points."behave_lint.reporters"]
-# Built-in reporters registered here during M8
+# Third-party plugins register here:
+#   [project.entry-points."behave_lint.rules"]      — rule plugins
+#   [project.entry-points."behave_lint.reporters"]  — reporter plugins
+#   [project.entry-points."behave_lint.config"]     — config providers
 
 [tool.hatch.build.targets.wheel]
 packages = ["behave_lint"]
@@ -108,7 +110,6 @@ include = [
     "behave_lint/",
     "tests/",
     "docs/",
-    "ref/",
     "examples/",
     "scripts/",
     "LICENSE",
@@ -227,6 +228,9 @@ dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
     "pytest-xdist>=3.5",
+    "watchdog>=4.0",
+    "pygls>=2.0",
+    "lsprotocol>=2024.0",
     "mkdocs>=1.6",
     "mkdocs-material>=9.5",
     "mkdocstrings[python]>=0.25",
