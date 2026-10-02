@@ -2,8 +2,6 @@
 
 Rules that detect overly complex features and scenarios.
 Default severity: WARNING.
-
-See RULE_TAXONOMY.md Section 3 and IMPLEMENTATION_ROADMAP.md E7.3.
 """
 
 from __future__ import annotations
@@ -77,7 +75,7 @@ class TooManyStepsRule(Rule):
         diagnostics: list[Diagnostic] = []
         max_steps = _DEFAULT_MAX_STEPS
 
-        rule_config = getattr(config, "rules", {}).get("BX001", {})
+        rule_config: dict[str, Any] = config.rule_params.get("BX001", {})
         if isinstance(rule_config, dict):
             max_steps = rule_config.get("max_steps", max_steps)
 
@@ -157,7 +155,7 @@ class TooManyScenariosRule(Rule):
         scenarios = list(feature.all_scenarios())
         max_scenarios = _DEFAULT_MAX_SCENARIOS
 
-        rule_config = getattr(config, "rules", {}).get("BX002", {})
+        rule_config: dict[str, Any] = config.rule_params.get("BX002", {})
         if isinstance(rule_config, dict):
             max_scenarios = rule_config.get("max_scenarios", max_scenarios)
 
@@ -239,7 +237,7 @@ class TooManyExampleRowsRule(Rule):
         diagnostics: list[Diagnostic] = []
         max_rows = _DEFAULT_MAX_EXAMPLE_ROWS
 
-        rule_config = getattr(config, "rules", {}).get("BX003", {})
+        rule_config: dict[str, Any] = config.rule_params.get("BX003", {})
         if isinstance(rule_config, dict):
             max_rows = rule_config.get("max_example_rows", max_rows)
 
@@ -324,7 +322,7 @@ class LongStepTextRule(Rule):
         diagnostics: list[Diagnostic] = []
         max_length = _DEFAULT_MAX_STEP_LENGTH
 
-        rule_config = getattr(config, "rules", {}).get("BX004", {})
+        rule_config: dict[str, Any] = config.rule_params.get("BX004", {})
         if isinstance(rule_config, dict):
             max_length = rule_config.get("max_step_length", max_length)
 
@@ -395,7 +393,7 @@ class TooManyTagsRule(Rule):
         diagnostics: list[Diagnostic] = []
         max_tags = 5
 
-        rule_config = getattr(config, "rules", {}).get("BX005", {})
+        rule_config: dict[str, Any] = config.rule_params.get("BX005", {})
         if isinstance(rule_config, dict):
             max_tags = rule_config.get("max_tags", max_tags)
 
@@ -485,7 +483,7 @@ class FeatureFileTooLongRule(Rule):
     def check(self, feature: Any, config: Config) -> list[Diagnostic]:
         max_lines = _DEFAULT_MAX_FILE_LINES
 
-        rule_config = getattr(config, "rules", {}).get("BX006", {})
+        rule_config: dict[str, Any] = config.rule_params.get("BX006", {})
         if isinstance(rule_config, dict):
             max_lines = rule_config.get("max_file_lines", max_lines)
 

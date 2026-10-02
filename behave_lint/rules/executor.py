@@ -3,8 +3,6 @@
 Schedules single-file rules for parallel execution and cross-file rules
 sequentially. Each rule receives its own context. Rule failures are
 isolated — a failure in one rule does not crash others.
-
-See COMPONENT_DESIGN.md C05 and RULE_ENGINE.md Section 6.
 """
 
 from __future__ import annotations
@@ -22,6 +20,21 @@ from behave_lint.rules.base import Rule
 from behave_lint.rules.diagnostic_factory import DiagnosticFactory
 from behave_lint.rules.registry import RuleRegistry
 from behave_lint.rules.scope import RuleScope
+
+_DOCS_BASE_URL = "https://mathiaspaulenko.github.io/behave-lint"
+
+
+def _default_doc_url(metadata: RuleMetadata) -> str:
+    """Build the documentation URL for a rule from its metadata.
+
+    Args:
+        metadata: The rule metadata.
+
+    Returns:
+        URL of the rule's section on the documentation site.
+    """
+    anchor = f"{metadata.rule_id.lower()}-{metadata.name}"
+    return f"{_DOCS_BASE_URL}/rules/{metadata.category.value}/#{anchor}"
 
 
 class RuleExecutor:
@@ -264,7 +277,11 @@ class RuleExecutor:
                 end_line=diag.end_line,
                 end_column=diag.end_column,
                 suggestion=diag.suggestion,
-                doc_url=diag.doc_url or metadata.doc_url,
+                doc_url=(
+                    diag.doc_url
+                    or metadata.doc_url
+                    or _default_doc_url(metadata)
+                ),
             )
             stamped.append(stamped_diag)
 

@@ -2,8 +2,6 @@
 
 Opt-in rules for very strict conventions.
 Default severity: INFO.
-
-See RULE_TAXONOMY.md Section 3 and IMPLEMENTATION_ROADMAP.md E7.5.
 """
 
 from __future__ import annotations
@@ -250,7 +248,7 @@ class ShortScenarioNameRule(Rule):
         diagnostics: list[Diagnostic] = []
         min_length = _DEFAULT_MIN_NAME_LENGTH
 
-        rule_config = getattr(config, "rules", {}).get("BP003", {})
+        rule_config: dict[str, Any] = config.rule_params.get("BP003", {})
         if isinstance(rule_config, dict):
             min_length = rule_config.get("min_name_length", min_length)
 
@@ -319,7 +317,7 @@ class ShortFeatureNameRule(Rule):
     def check(self, feature: Any, config: Config) -> list[Diagnostic]:
         min_length = _DEFAULT_MIN_FEATURE_NAME_LENGTH
 
-        rule_config = getattr(config, "rules", {}).get("BP004", {})
+        rule_config: dict[str, Any] = config.rule_params.get("BP004", {})
         if isinstance(rule_config, dict):
             min_length = rule_config.get("min_feature_name_length", min_length)
 
