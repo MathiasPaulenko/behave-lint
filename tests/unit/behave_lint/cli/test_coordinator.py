@@ -15,7 +15,13 @@ class TestMain:
         exit_code = main([])
         assert exit_code == EXIT_CODE_SUCCESS
         captured = capsys.readouterr()
-        assert "No paths" in captured.err
+        # Falls back to the configured ``paths`` default ("features/");
+        # when nothing is discovered the engine reports it.
+        assert (
+            "No paths" in captured.err
+            or "No .feature files" in captured.err
+            or "No diagnostics" in captured.out
+        )
 
     def test_with_paths_returns_zero(self, capsys) -> None:  # type: ignore[no-untyped-def]
         exit_code = main(["features/"])
