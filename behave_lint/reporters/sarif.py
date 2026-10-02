@@ -2,8 +2,6 @@
 
 Produces a SARIF v2.1.0 compliant JSON document with results, rules,
 and tool metadata. Compatible with GitHub Actions code scanning.
-
-See SPECIFICATION.md Section 12 and API.md Section 8.
 """
 
 from __future__ import annotations
@@ -14,6 +12,7 @@ from typing import ClassVar
 from behave_lint import __version__
 from behave_lint.models.enums import Severity
 from behave_lint.models.lint_result import LintResult
+from behave_lint.models.rule_metadata import RuleMetadata
 from behave_lint.reporters.base import Reporter
 
 SARIF_VERSION = "2.1.0"
@@ -37,8 +36,33 @@ class SARIFReporter(Reporter):
     supports_file_output: ClassVar[bool] = True
     supports_stdout: ClassVar[bool] = True
 
+    _metadata_cache: ClassVar[dict[str, RuleMetadata] | None] = None
+
     @staticmethod
-    def _build_rules(result: LintResult) -> list[dict[str, object]]:
+    def _rule_metadata(rule_id: str) -> dict[str, str]:
+        """Look up display metadata for a rule from the built-in registry.
+
+        Args:
+            rule_id: The rule identifier.
+
+        Returns:
+            A dict with ``name``/``description`` keys, possibly empty.
+        """
+        from behave_lint.rules.builtin import register_builtins
+        from behave_lint.rules.registry import RuleRegistry
+
+        if SARIFReporter._metadata_cache is None:
+            registry = RuleRegistry()
+            register_builtins(registry)
+            SARIFReporter._metadata_cache = {
+                m.rule_id: m for _, m, _ in registry.get_all()
+            }
+        meta = SARIFReporter._metadata_cache.get(rule_id)
+        if meta is None:
+            return {}
+        return {"name": meta.name, "description": meta.description}
+
+    def _build_rules(self, result: LintResult) -> list[dict[str, object]]:
         """Build the SARIF rules array from diagnostics.
 
         Args:
@@ -55,10 +79,11 @@ class SARIFReporter(Reporter):
                 continue
             seen.add(diag.rule_id)
 
+            meta = self._rule_metadata(diag.rule_id)
             rule: dict[str, object] = {
                 "id": diag.rule_id,
-                "name": diag.rule_id,
-                "shortDescription": {"text": diag.message},
+                "name": meta.get("name") or diag.rule_id,
+                "shortDescription": {"text": meta.get("description") or diag.message},
                 "properties": {
                     "category": diag.category.value,
                 },

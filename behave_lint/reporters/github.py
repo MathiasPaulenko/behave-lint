@@ -2,8 +2,6 @@
 
 Outputs ``::error`` and ``::warning`` workflow commands that GitHub
 Actions renders as inline annotations in PR review.
-
-See SPECIFICATION.md Section 12 and API.md Section 8.
 """
 
 from __future__ import annotations
@@ -20,6 +18,20 @@ _SEVERITY_TO_COMMAND: dict[Severity, str] = {
     Severity.WARNING: "warning",
     Severity.INFO: "notice",
 }
+
+
+def _escape_data(value: str) -> str:
+    """Escape command data per the workflow-command spec."""
+    return (
+        value.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+    )
+
+
+def _escape_property(value: str) -> str:
+    """Escape a command property value (``file=``, ``col=``, …)."""
+    return (
+        _escape_data(value).replace(":", "%3A").replace(",", "%2C")
+    )
 
 
 class GitHubActionsReporter(Reporter):
@@ -41,11 +53,14 @@ class GitHubActionsReporter(Reporter):
             ``::error file=...,line=...::rule_id: message``.
         """
         command = _SEVERITY_TO_COMMAND.get(diag.severity, "warning")
-        parts: list[str] = [f"file={diag.file_path}", f"line={diag.line}"]
+        parts: list[str] = [
+            f"file={_escape_property(diag.file_path)}",
+            f"line={diag.line}",
+        ]
         if diag.column is not None:
             parts.append(f"col={diag.column}")
         params = ",".join(parts)
-        message = f"{diag.rule_id}: {diag.message}"
+        message = _escape_data(f"{diag.rule_id}: {diag.message}")
         return f"::{command} {params}::{message}"
 
     def render(self, result: LintResult, output_file: str | None = None) -> None:
