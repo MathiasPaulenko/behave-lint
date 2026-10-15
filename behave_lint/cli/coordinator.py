@@ -159,9 +159,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return internal_error_exit_code()
 
 
-def _run_lint(
-    args: CLIArgs, paths: list[str], config: Config | None = None
-) -> int:
+def _run_lint(args: CLIArgs, paths: list[str], config: Config | None = None) -> int:
     """Run the full lint pipeline.
 
     Args:

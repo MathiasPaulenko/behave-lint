@@ -1,5 +1,4 @@
-"""Rule scope enum — distinguishes single-file from cross-file rules.
-"""
+"""Rule scope enum — distinguishes single-file from cross-file rules."""
 
 from __future__ import annotations
 

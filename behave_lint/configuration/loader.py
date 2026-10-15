@@ -285,9 +285,7 @@ def _resolve_extends(
 
     parent_path = (config_file.parent / extends).resolve()
     if parent_path in visited:
-        raise ConfigError(
-            f"Cyclic 'extends' chain involving '{parent_path}'."
-        )
+        raise ConfigError(f"Cyclic 'extends' chain involving '{parent_path}'.")
     if not parent_path.is_file():
         raise ConfigError(
             f"Extended configuration file not found: '{extends}' "
@@ -305,8 +303,7 @@ def _resolve_extends(
                 data = tomllib.load(f)
         except tomllib.TOMLDecodeError as exc:
             raise ConfigError(
-                f"Invalid TOML in extended configuration file "
-                f"'{parent_path}': {exc}"
+                f"Invalid TOML in extended configuration file '{parent_path}': {exc}"
             ) from exc
         raw = data if isinstance(data, dict) else {}
 

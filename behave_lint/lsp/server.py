@@ -73,9 +73,7 @@ def _diagnostic_to_lsp(diag: BLDiagnostic) -> lsp.Diagnostic:
     )
 
 
-def _fix_edit_to_text_edit(
-    edit: FixEdit, content: str | None = None
-) -> lsp.TextEdit:
+def _fix_edit_to_text_edit(edit: FixEdit, content: str | None = None) -> lsp.TextEdit:
     """Convert a behave-lint FixEdit to an LSP TextEdit.
 
     ``FixEdit`` uses 1-based inclusive line ranges; LSP uses 0-based

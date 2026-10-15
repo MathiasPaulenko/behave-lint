@@ -106,7 +106,6 @@ wheels = [
 
 [[package]]
 name = "behave-lint"
-version = "2.4.1"
 source = { editable = "." }
 dependencies = [
     { name = "behave-model" },
@@ -149,17 +148,20 @@ watch = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "lsprotocol" },
     { name = "mkdocs" },
     { name = "mkdocs-material" },
     { name = "mkdocstrings", extra = ["python"] },
     { name = "mypy" },
     { name = "pip-audit" },
     { name = "pre-commit" },
+    { name = "pygls" },
     { name = "pymdown-extensions" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-xdist" },
     { name = "ruff" },
+    { name = "watchdog" },
 ]
 
 [package.metadata]
@@ -187,21 +189,24 @@ requires-dist = [
     { name = "watchdog", marker = "extra == 'dev'", specifier = ">=4.0" },
     { name = "watchdog", marker = "extra == 'watch'", specifier = ">=4.0" },
 ]
-provides-extras = ["watch", "lsp", "dev", "docs", "test", "release"]
+provides-extras = ["dev", "docs", "lsp", "release", "test", "watch"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "lsprotocol", specifier = ">=2024.0" },
     { name = "mkdocs", specifier = ">=1.6" },
     { name = "mkdocs-material", specifier = ">=9.5" },
     { name = "mkdocstrings", extras = ["python"], specifier = ">=0.25" },
     { name = "mypy", specifier = ">=1.10" },
     { name = "pip-audit", specifier = ">=2.7" },
     { name = "pre-commit", specifier = ">=3.7" },
+    { name = "pygls", specifier = ">=2.0" },
     { name = "pymdown-extensions", specifier = ">=10.7" },
     { name = "pytest", specifier = ">=8.0" },
     { name = "pytest-cov", specifier = ">=5.0" },
     { name = "pytest-xdist", specifier = ">=3.5" },
     { name = "ruff", specifier = ">=0.6" },
+    { name = "watchdog", specifier = ">=4.0" },
 ]
 
 [[package]]

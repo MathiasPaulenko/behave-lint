@@ -35,11 +35,7 @@ def _matching_definitions(
     text: str, keyword: str, defs: tuple[StepDefinition, ...]
 ) -> list[StepDefinition]:
     """Return the loaded step definitions matching a step."""
-    return [
-        d
-        for d in defs
-        if d.matches_keyword(keyword) and d.matches(text)
-    ]
+    return [d for d in defs if d.matches_keyword(keyword) and d.matches(text)]
 
 
 class UndefinedStepPatternRule(Rule):
@@ -113,16 +109,11 @@ class UndefinedStepPatternRule(Rule):
                         )
                     )
                     continue
-                if (
-                    defs
-                    and text
-                    and not _matching_definitions(text, keyword, defs)
-                ):
+                if defs and text and not _matching_definitions(text, keyword, defs):
                     diagnostics.append(
                         self.diagnostic(
                             message=(
-                                f"Step '{step.name}' has no matching "
-                                "step definition"
+                                f"Step '{step.name}' has no matching step definition"
                             ),
                             node=step,
                             suggestion=(
@@ -181,12 +172,8 @@ class AmbiguousStepPatternRule(Rule):
             for step, keyword in _iter_steps_with_keywords_in(scenario):
                 text = getattr(step, "name", "")
                 words = set(text.strip().lower().split())
-                matches = (
-                    _matching_definitions(text, keyword, defs) if defs else []
-                )
-                unique_defs = {
-                    (d.file_path, d.line) for d in matches
-                }
+                matches = _matching_definitions(text, keyword, defs) if defs else []
+                unique_defs = {(d.file_path, d.line) for d in matches}
                 ambiguous = len(unique_defs) > 1
                 if not ambiguous and not words & self._GENERIC_WORDS:
                     continue
@@ -202,8 +189,7 @@ class AmbiguousStepPatternRule(Rule):
                         ),
                         node=step,
                         suggestion=(
-                            "Use more specific text to avoid "
-                            "ambiguous step matches."
+                            "Use more specific text to avoid ambiguous step matches."
                         ),
                     )
                 )

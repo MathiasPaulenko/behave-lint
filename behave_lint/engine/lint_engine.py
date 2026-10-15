@@ -117,9 +117,7 @@ class LintEngine:
             )
 
             defs = load_step_definitions(config.step_definitions)
-            config = replace(
-                config, step_definition_patterns=tuple(defs)
-            )
+            config = replace(config, step_definition_patterns=tuple(defs))
 
         lint_paths = paths if paths is not None else list(config.paths)
         exclude_patterns = list(config.exclude) + list(exclude or [])
@@ -238,12 +236,8 @@ class LintEngine:
         # 7. Collect and process diagnostics
         collector = DiagnosticCollector(config)
         all_diagnostics = parse_errors + raw_diagnostics + cached_diagnostics
-        file_lines = {
-            fp: content.splitlines() for fp, content in all_contents.items()
-        }
-        processed = collector.collect_from(
-            all_diagnostics, file_contents=file_lines
-        )
+        file_lines = {fp: content.splitlines() for fp, content in all_contents.items()}
+        processed = collector.collect_from(all_diagnostics, file_contents=file_lines)
 
         # 8. Build summary
         elapsed_ms = (time.perf_counter() - start_time) * 1000.0

@@ -22,16 +22,12 @@ _SEVERITY_TO_COMMAND: dict[Severity, str] = {
 
 def _escape_data(value: str) -> str:
     """Escape command data per the workflow-command spec."""
-    return (
-        value.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
-    )
+    return value.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
 
 
 def _escape_property(value: str) -> str:
     """Escape a command property value (``file=``, ``col=``, …)."""
-    return (
-        _escape_data(value).replace(":", "%3A").replace(",", "%2C")
-    )
+    return _escape_data(value).replace(":", "%3A").replace(",", "%2C")
 
 
 class GitHubActionsReporter(Reporter):

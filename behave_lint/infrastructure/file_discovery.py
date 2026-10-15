@@ -86,9 +86,7 @@ def _is_excluded(path: Path, patterns: list[str]) -> bool:
         # Plain prefix match: "features/wip/" or "features/wip" excludes
         # that path and anything underneath it.
         prefix = normalized.rstrip("/")
-        if prefix and (
-            path_str == prefix or path_str.startswith(prefix + "/")
-        ):
+        if prefix and (path_str == prefix or path_str.startswith(prefix + "/")):
             return True
     return False
 

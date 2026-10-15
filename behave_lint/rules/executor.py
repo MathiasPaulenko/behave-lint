@@ -278,9 +278,7 @@ class RuleExecutor:
                 end_column=diag.end_column,
                 suggestion=diag.suggestion,
                 doc_url=(
-                    diag.doc_url
-                    or metadata.doc_url
-                    or _default_doc_url(metadata)
+                    diag.doc_url or metadata.doc_url or _default_doc_url(metadata)
                 ),
             )
             stamped.append(stamped_diag)

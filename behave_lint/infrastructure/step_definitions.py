@@ -89,9 +89,7 @@ def load_step_definitions(path: str) -> list[StepDefinition]:
     defs: list[StepDefinition] = []
     for py_file in candidates:
         try:
-            tree = ast.parse(
-                py_file.read_text(encoding="utf-8"), filename=str(py_file)
-            )
+            tree = ast.parse(py_file.read_text(encoding="utf-8"), filename=str(py_file))
         except (OSError, SyntaxError) as exc:
             logger.warning("Cannot parse step definitions file %s: %s", py_file, exc)
             continue

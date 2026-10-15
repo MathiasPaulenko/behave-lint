@@ -167,9 +167,7 @@ def lint(
     ] = None,
     fail_on: Annotated[
         FailOn | None,
-        typer.Option(
-            "--fail-on", help="Minimum severity for non-zero exit."
-        ),
+        typer.Option("--fail-on", help="Minimum severity for non-zero exit."),
     ] = None,
     output: Annotated[
         str | None,
@@ -196,9 +194,7 @@ def lint(
     ] = False,
     quiet: Annotated[
         bool,
-        typer.Option(
-            "--quiet", help="Suppress all output (including diagnostics)."
-        ),
+        typer.Option("--quiet", help="Suppress all output (including diagnostics)."),
     ] = False,
     statistics: Annotated[
         bool, typer.Option("--statistics", help="Show diagnostic statistics.")

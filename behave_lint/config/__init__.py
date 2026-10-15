@@ -1,5 +1,4 @@
-"""Public configuration API — alias for behave_lint.configuration.
-"""
+"""Public configuration API — alias for behave_lint.configuration."""
 
 from __future__ import annotations
 

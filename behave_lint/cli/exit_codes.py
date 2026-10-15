@@ -53,9 +53,7 @@ def determine_exit_code(
                 return EXIT_CODE_USER_ERROR
 
     if max_warnings >= 0:
-        warning_count = sum(
-            1 for d in diagnostics if d.severity == Severity.WARNING
-        )
+        warning_count = sum(1 for d in diagnostics if d.severity == Severity.WARNING)
         if warning_count > max_warnings:
             return EXIT_CODE_USER_ERROR
 

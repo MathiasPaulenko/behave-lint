@@ -103,13 +103,10 @@ def test_config_exclude_is_honored(tmp_path: Path) -> None:
 def test_rule_params_from_config(tmp_path: Path) -> None:
     """``[tool.behave-lint.rules.BX001]`` params must reach the rule."""
     content = (
-        "Feature: X\n\n  Scenario: S\n"
-        "    Given one\n    When two\n    Then three\n"
+        "Feature: X\n\n  Scenario: S\n    Given one\n    When two\n    Then three\n"
     )
     (tmp_path / "x.feature").write_text(content, encoding="utf-8")
-    config = Config(
-        select=("BX001",), rule_params={"BX001": {"max_steps": 1}}
-    )
+    config = Config(select=("BX001",), rule_params={"BX001": {"max_steps": 1}})
     result = _engine(config).lint([str(tmp_path)], use_cache=False)
     assert [d.rule_id for d in result.diagnostics] == ["BX001"]
 
@@ -146,18 +143,14 @@ def test_extends_merges_parent_config(tmp_path: Path) -> None:
     child_dir = tmp_path / "child"
     child_dir.mkdir()
     child = child_dir / "pyproject.toml"
-    child.write_text(
-        '[tool.behave-lint]\nextends = "../base.toml"\n', encoding="utf-8"
-    )
+    child.write_text('[tool.behave-lint]\nextends = "../base.toml"\n', encoding="utf-8")
     config = load_config(config_path=str(child), env={})
     assert set(config.select) == {"BC001", "BC002"}
 
 
 def test_extends_missing_file_raises(tmp_path: Path) -> None:
     child = tmp_path / "pyproject.toml"
-    child.write_text(
-        '[tool.behave-lint]\nextends = "missing.toml"\n', encoding="utf-8"
-    )
+    child.write_text('[tool.behave-lint]\nextends = "missing.toml"\n', encoding="utf-8")
     import pytest
 
     from behave_lint.exceptions import ConfigError
@@ -207,14 +200,10 @@ def test_step_definitions_undefined_step(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     (tmp_path / "f.feature").write_text(
-        "Feature: X\n\n  Scenario: S\n"
-        "    Given a user\n"
-        "    When something undefined\n",
+        "Feature: X\n\n  Scenario: S\n    Given a user\n    When something undefined\n",
         encoding="utf-8",
     )
-    config = Config(
-        select=("BD001",), step_definitions=str(steps_dir)
-    )
+    config = Config(select=("BD001",), step_definitions=str(steps_dir))
     result = _engine(config).lint([str(tmp_path)], use_cache=False)
     ids = [(d.rule_id, d.line) for d in result.diagnostics]
     assert ids == [("BD001", 5)]
@@ -234,9 +223,7 @@ def test_step_definitions_ambiguous(tmp_path: Path) -> None:
         "Feature: X\n\n  Scenario: S\n    Given a user\n",
         encoding="utf-8",
     )
-    config = Config(
-        select=("BD002",), step_definitions=str(steps_dir)
-    )
+    config = Config(select=("BD002",), step_definitions=str(steps_dir))
     result = _engine(config).lint([str(tmp_path)], use_cache=False)
     assert [d.rule_id for d in result.diagnostics] == ["BD002"]
 
