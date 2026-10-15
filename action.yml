@@ -1,0 +1,29 @@
+name: behave-lint
+description: >-
+  Lint Gherkin .feature files and Behave test suites.
+  Fails the job when lint findings are present.
+author: MathiasPaulenko
+branding:
+  icon: check-circle
+  color: blue
+
+inputs:
+  path:
+    description: Path to lint (features dir or project root)
+    required: false
+    default: features/
+  args:
+    description: Extra args appended to behave-lint (e.g. "--output json")
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Install behave-lint
+      shell: bash
+      run: pip install behave-lint
+
+    - name: Lint feature files
+      shell: bash
+      run: behave-lint "${{ inputs.path }}" ${{ inputs.args }}
