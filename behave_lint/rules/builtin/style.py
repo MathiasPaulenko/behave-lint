@@ -22,6 +22,24 @@ _STEP_KEYWORDS_ORDER = ["given", "when", "then"]
 _CAMEL_CASE_PATTERN = re.compile(r"(?<!^)(?=[A-Z])")
 
 
+def _docstring_line_numbers(lines: list[str]) -> set[int]:
+    """Return 1-based line numbers belonging to Gherkin docstring blocks.
+
+    Docstring content is verbatim user data — it must not be scanned
+    or rewritten by line-oriented rules.
+    """
+    doc_lines: set[int] = set()
+    in_docstring = False
+    for i, line in enumerate(lines, 1):
+        stripped = line.strip()
+        if stripped.startswith(('"""', "'''")):
+            in_docstring = not in_docstring
+            doc_lines.add(i)
+        elif in_docstring:
+            doc_lines.add(i)
+    return doc_lines
+
+
 class TagCasingRule(Rule):
     """BS001: Enforce consistent tag casing (lowercase with underscores).
 
@@ -164,8 +182,12 @@ class TagCasingRule(Rule):
             old_tag = f"@{without_at}"
             new_tag = f"@{expected}"
 
-            if old_tag in old_line:
-                new_line = old_line.replace(old_tag, new_tag)
+            new_line = re.sub(
+                r"(?<!\S)" + re.escape(old_tag) + r"(?!\S)",
+                new_tag,
+                old_line,
+            )
+            if new_line != old_line:
                 fixes.append(
                     FixEdit(
                         file_path=file_path,
@@ -306,64 +328,82 @@ class KeywordOrderingRule(Rule):
             if not scenario_has_diag:
                 continue
 
-            groups: list[list[str]] = []
-            group_keywords: list[str] = []
-            current_group: list[str] = []
-            current_major: str | None = None
-
+            # Build contiguous blocks per step so docstrings, data tables
+            # and comment lines travel with their step when reordering.
+            resolved_lines: list[int] = []
             for step in steps:
-                keyword = getattr(step, "keyword", "").strip().lower()
                 step_line = getattr(step, "line", None)
                 if step_line is None:
                     loc = getattr(step, "location", None)
                     if loc is not None:
                         step_line = getattr(loc, "line", None)
-                if step_line is None:
-                    continue
+                if step_line is None or not (1 <= step_line <= len(lines)):
+                    break
+                resolved_lines.append(step_line)
+            if len(resolved_lines) != len(steps):
+                continue
 
-                idx = step_line - 1
-                if idx < 0 or idx >= len(lines):
-                    continue
+            # Trailing content after the last step's own line can't be
+            # bounded safely — skip the fix rather than leave it orphaned.
+            last_step = steps[-1]
+            if any(
+                getattr(last_step, attr, None)
+                for attr in ("doc_string", "docstring", "data_table", "table")
+            ):
+                continue
 
-                line_text = lines[idx]
+            blocks: list[list[str]] = []
+            for i, start in enumerate(resolved_lines):
+                end = (
+                    resolved_lines[i + 1] - 1
+                    if i + 1 < len(resolved_lines)
+                    else resolved_lines[i]
+                )
+                blocks.append(lines[start - 1 : end])
 
-                if keyword in ("and", "but", "*"):
-                    current_group.append(line_text)
-                elif keyword in _STEP_KEYWORDS_ORDER:
-                    if current_group and current_major is not None:
+            groups: list[list[str]] = []
+            group_keywords: list[str] = []
+            current_group: list[str] = []
+            current_major: str | None = None
+
+            for step, block in zip(steps, blocks, strict=True):
+                keyword = getattr(step, "keyword", "").strip().lower()
+
+                if keyword in _STEP_KEYWORDS_ORDER:
+                    if current_major is not None:
                         groups.append(current_group)
                         group_keywords.append(current_major)
-                    current_group = [line_text]
+                        current_group = list(block)
+                    else:
+                        current_group.extend(block)
                     current_major = keyword
                 else:
-                    current_group.append(line_text)
+                    # and/but/* and unknown keywords ride their current group;
+                    # steps before the first major keyword fold into it too.
+                    current_group.extend(block)
 
-            if current_group and current_major is not None:
+            if current_group:
                 groups.append(current_group)
-                group_keywords.append(current_major)
+                group_keywords.append(current_major or "")
 
             if len(groups) <= 1:
                 continue
 
+            def _sort_weight(kw_pair: tuple[str, list[str]]) -> int:
+                kw = kw_pair[0]
+                return (
+                    _STEP_KEYWORDS_ORDER.index(kw)
+                    if kw in _STEP_KEYWORDS_ORDER
+                    else len(_STEP_KEYWORDS_ORDER)
+                )
+
             sorted_pairs = sorted(
-                zip(group_keywords, groups, strict=True),
-                key=lambda pair: _STEP_KEYWORDS_ORDER.index(pair[0]),
+                zip(group_keywords, groups, strict=True), key=_sort_weight
             )
             reordered = [line for _, grp in sorted_pairs for line in grp]
 
-            first_step_line = getattr(steps[0], "line", None)
-            if first_step_line is None:
-                loc = getattr(steps[0], "location", None)
-                if loc is not None:
-                    first_step_line = getattr(loc, "line", None)
-            last_step = steps[-1]
-            last_step_line = getattr(last_step, "line", None)
-            if last_step_line is None:
-                loc = getattr(last_step, "location", None)
-                if loc is not None:
-                    last_step_line = getattr(loc, "line", None)
-            if first_step_line is None or last_step_line is None:
-                continue
+            first_step_line = resolved_lines[0]
+            last_step_line = resolved_lines[-1]
 
             start_idx = first_step_line - 1
             end_idx = last_step_line
@@ -844,7 +884,11 @@ class StepKeywordCasingRule(Rule):
         except OSError:
             return diagnostics
 
-        for i, line in enumerate(content.splitlines(keepends=True), 1):
+        lines = content.splitlines(keepends=True)
+        doc_lines = _docstring_line_numbers(lines)
+        for i, line in enumerate(lines, 1):
+            if i in doc_lines:
+                continue
             stripped = line.lstrip()
             for lower, correct in self._KEYWORD_MAP.items():
                 prefix = lower + " "
@@ -970,7 +1014,11 @@ class TrailingWhitespaceRule(Rule):
         except OSError:
             return diagnostics
 
-        for i, line in enumerate(content.splitlines(keepends=True), 1):
+        lines = content.splitlines(keepends=True)
+        doc_lines = _docstring_line_numbers(lines)
+        for i, line in enumerate(lines, 1):
+            if i in doc_lines:
+                continue
             stripped = line.rstrip("\r\n")
             if stripped != stripped.rstrip():
                 diagnostics.append(
@@ -1084,7 +1132,11 @@ class TabIndentationRule(Rule):
         except OSError:
             return diagnostics
 
-        for i, line in enumerate(content.splitlines(keepends=True), 1):
+        lines = content.splitlines(keepends=True)
+        doc_lines = _docstring_line_numbers(lines)
+        for i, line in enumerate(lines, 1):
+            if i in doc_lines:
+                continue
             if self._TAB_RE.match(line):
                 diagnostics.append(
                     self.diagnostic(

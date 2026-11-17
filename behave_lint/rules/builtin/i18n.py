@@ -21,13 +21,11 @@ from behave_lint.rules.base import Rule
 _NON_ASCII_PATTERN = re.compile(r"[^\x00-\x7F]")
 
 _LOCALE_SPECIFIC_PATTERN = re.compile(
-    r"\b(?:"
     r"\$\d+(?:\.\d{2})?"  # $10.99
-    r"|\xe2\x82\xac\d+"  # euro sign + digits
-    r"|\d{1,2}/\d{1,2}/\d{2,4}"  # date formats
-    r"|\d{4}-\d{2}-\d{2}"  # ISO date
-    r"|\d{1,2}:\d{2}(?::\d{2})?\s?(?:AM|PM|am|pm)"  # time
-    r")\b"
+    r"|€\d+"  # euro sign + digits
+    r"|\b\d{1,2}/\d{1,2}/\d{2,4}\b"  # date formats
+    r"|\b\d{4}-\d{2}-\d{2}\b"  # ISO date
+    r"|\b\d{1,2}:\d{2}(?::\d{2})?\s?(?:AM|PM|am|pm)\b"  # time
 )
 
 _CURRENCY_SYMBOLS = re.compile(r"[$\u20ac\u00a3\u00a5\u20a6\u20a9\u20b9]")

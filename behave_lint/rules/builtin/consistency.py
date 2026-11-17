@@ -251,7 +251,6 @@ class InconsistentNamingConventionRule(Rule):
         ]
 
         if starts_with_given and does_not:
-            (starts_with_given if len(starts_with_given) > len(does_not) else does_not)
             minority = (
                 does_not
                 if len(starts_with_given) > len(does_not)

@@ -371,8 +371,12 @@ class InvalidTagSyntaxRule(Rule):
             fixed = re.sub(r"[^A-Za-z0-9_]", "_", without_at)
             new_tag = f"@{fixed}"
 
-            if tag_name in old_line:
-                new_line = old_line.replace(tag_name, new_tag)
+            new_line = re.sub(
+                r"(?<!\S)" + re.escape(tag_name) + r"(?!\S)",
+                new_tag,
+                old_line,
+            )
+            if new_line != old_line:
                 fixes.append(
                     FixEdit(
                         file_path=file_path,

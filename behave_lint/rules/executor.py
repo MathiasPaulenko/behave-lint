@@ -140,6 +140,11 @@ class RuleExecutor:
             A tuple of (diagnostics, fix edits) from all single-file
             rule executions.
         """
+        # max_workers < 1 would make ThreadPoolExecutor raise; treat
+        # it as "auto" instead of crashing the run.
+        if max_workers is not None and max_workers < 1:
+            max_workers = None
+
         # Build work units: (rule_class, metadata, feature)
         work_units: list[tuple[type[Rule], RuleMetadata, Any]] = []
         for rule_class, metadata in rules:
@@ -263,24 +268,35 @@ class RuleExecutor:
         if raw_diagnostics is None:
             return [], []
 
-        # Stamp diagnostics: ensure rule_id and category match metadata
+        # Stamp diagnostics: ensure rule_id and category match metadata.
+        # Each diagnostic is stamped independently so one malformed
+        # item (wrong type, invalid fields) cannot kill the rule's
+        # whole output — or crash the run for cross-file rules.
         stamped: list[Diagnostic] = []
         for diag in raw_diagnostics:
-            stamped_diag = Diagnostic(
-                rule_id=metadata.rule_id,
-                severity=severity,
-                message=diag.message,
-                file_path=diag.file_path,
-                line=diag.line,
-                category=metadata.category,
-                column=diag.column,
-                end_line=diag.end_line,
-                end_column=diag.end_column,
-                suggestion=diag.suggestion,
-                doc_url=(
-                    diag.doc_url or metadata.doc_url or _default_doc_url(metadata)
-                ),
-            )
+            try:
+                stamped_diag = Diagnostic(
+                    rule_id=metadata.rule_id,
+                    severity=self._config.get_severity(metadata.rule_id, diag.severity),
+                    message=diag.message,
+                    file_path=diag.file_path,
+                    line=diag.line,
+                    category=metadata.category,
+                    column=diag.column,
+                    end_line=diag.end_line,
+                    end_column=diag.end_column,
+                    suggestion=diag.suggestion,
+                    doc_url=(
+                        diag.doc_url or metadata.doc_url or _default_doc_url(metadata)
+                    ),
+                )
+            except Exception as exc:
+                warnings.warn(
+                    f"Rule '{metadata.rule_id}' produced an invalid "
+                    f"diagnostic ({exc}). Diagnostic dropped.",
+                    stacklevel=2,
+                )
+                continue
             stamped.append(stamped_diag)
 
         # Validate diagnostics
