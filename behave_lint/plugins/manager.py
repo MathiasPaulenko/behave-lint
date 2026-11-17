@@ -25,6 +25,21 @@ _ENTRY_POINT_GROUPS: dict[PluginType, str] = {
     PluginType.CONFIG: "behave_lint.config",
 }
 
+_FALSEY_STRINGS = frozenset({"false", "0", "no", "off", "disabled"})
+
+
+def _truthy(value: object) -> bool:
+    """Interpret a config value as a boolean.
+
+    TOML booleans arrive as ``bool``, but a string like ``"false"``
+    should not be treated as enabled just because it is non-empty.
+    """
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() not in _FALSEY_STRINGS
+    return bool(value)
+
 
 class SupportsEntryPoint(Protocol):
     """Protocol for an entry point object (importlib.metadata.EntryPoint)."""
@@ -167,7 +182,9 @@ class PluginManager:
 
         try:
             module_obj = importlib.import_module(plugin.module)
-            target = getattr(module_obj, plugin.attr)
+            target: object = module_obj
+            for part in plugin.attr.split("."):
+                target = getattr(target, part)
         except ImportError as exc:
             error = PluginLoadError(plugin.name, str(exc))
             self._errors.append(str(error))
@@ -259,10 +276,15 @@ class PluginManager:
 
             if isinstance(result, list):
                 rule_classes = [
-                    rc for rc in result if isinstance(rc, type) and issubclass(rc, Rule)
+                    rc if isinstance(rc, type) else type(rc)
+                    for rc in result
+                    if (isinstance(rc, type) and issubclass(rc, Rule))
+                    or isinstance(rc, Rule)
                 ]
             elif isinstance(result, type) and issubclass(result, Rule):
                 rule_classes = [result]
+            elif isinstance(result, Rule):
+                rule_classes = [type(result)]
         else:
             error = PluginRegistrationError(
                 plugin.name,
@@ -298,15 +320,22 @@ class PluginManager:
         if not plugin_config:
             return True
         if name in plugin_config:
-            return bool(plugin_config[name])
-        return bool(plugin_config.get("*", True))
+            return _truthy(plugin_config[name])
+        return _truthy(plugin_config.get("*", True))
 
-    def load_config_plugins(self) -> dict[str, object]:
+    def load_config_plugins(
+        self,
+        plugin_config: dict[str, bool] | None = None,
+    ) -> dict[str, object]:
         """Load config-provider plugins and collect their overrides.
 
         Config plugins (``behave_lint.config`` entry point group) must
         provide a callable returning a dict of configuration overrides.
         These are merged into the configuration before CLI overrides.
+
+        Args:
+            plugin_config: Optional enable/disable map (``plugins``
+                config key). Disabled config plugins are not loaded.
 
         Returns:
             A dict of configuration overrides provided by plugins.
@@ -314,6 +343,8 @@ class PluginManager:
         overrides: dict[str, object] = {}
         for plugin in sorted(self._plugins.values(), key=lambda p: (p.group, p.name)):
             if plugin.type is not PluginType.CONFIG:
+                continue
+            if not self._is_plugin_enabled(plugin.name, plugin_config):
                 continue
             try:
                 target = self.load_plugin(plugin)

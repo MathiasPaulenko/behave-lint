@@ -7,6 +7,7 @@ the terminal.
 
 from __future__ import annotations
 
+import difflib
 import logging
 import os
 import sys
@@ -17,10 +18,11 @@ from behave_lint.cli.exit_codes import (
     internal_error_exit_code,
 )
 from behave_lint.cli.parser import CLIArgs
-from behave_lint.cli.router import route_command
+from behave_lint.cli.router import SupportsRuleRegistry, route_command
 from behave_lint.constants import (
     ENV_PREFIX,
     EXIT_CODE_SUCCESS,
+    PARSE_ERROR_RULE_ID,
     TRACE_ENV_VAR,
 )
 from behave_lint.models.config import Config
@@ -57,6 +59,39 @@ def _build_overrides(args: CLIArgs) -> dict[str, object]:
 def _config_path_arg(args: CLIArgs) -> str | None:
     """Explicit --config path, falling back to BEHAVE_LINT_CONFIG."""
     return args.config or os.environ.get(f"{ENV_PREFIX}CONFIG")
+
+
+def _validate_rule_ids(config: Config, registry: SupportsRuleRegistry) -> str | None:
+    """Check that every rule ID referenced by the config exists.
+
+    Args:
+        config: The resolved configuration.
+        registry: The rule registry (after plugins were loaded).
+
+    Returns:
+        An error message describing the unknown IDs, or None if all
+        referenced IDs are valid.
+    """
+    known = {metadata.rule_id for _, metadata, _ in registry.get_all()}
+    known.add(PARSE_ERROR_RULE_ID)
+    known_ids = sorted(known)
+
+    referenced = (
+        set(config.select)
+        | set(config.ignore)
+        | set(config.severity_overrides)
+        | set(config.rule_params)
+    )
+    unknown = sorted(referenced - known)
+    if not unknown:
+        return None
+
+    parts: list[str] = []
+    for rule_id in unknown:
+        match = difflib.get_close_matches(rule_id, known_ids, n=1, cutoff=0.6)
+        hint = f" (did you mean '{match[0]}'?)" if match else ""
+        parts.append(f"'{rule_id}'{hint}")
+    return f"Unknown rule ID(s): {', '.join(parts)}"
 
 
 def run_lint(args: CLIArgs) -> int:
@@ -183,12 +218,25 @@ def _run_lint(args: CLIArgs, paths: list[str], config: Config | None = None) -> 
 
     plugin_mgr = PluginManager(registry)
     plugin_mgr.discover_all()
-    plugin_overrides = plugin_mgr.load_config_plugins()
 
-    # Load configuration (unless the caller already resolved it — in
-    # that case re-apply plugin-provided overrides on top of it).
+    # Load configuration first so the `plugins` enable/disable map is
+    # available before loading config-provider plugins. If overrides
+    # end up changing the config, it is reloaded below.
     try:
-        if config is None or plugin_overrides:
+        if config is None:
+            from behave_lint.configuration.loader import load_config
+
+            config = load_config(
+                config_path=_config_path_arg(args),
+                overrides=_build_overrides(args) or None,
+            )
+    except Exception as exc:
+        print(f"Configuration error: {exc}", file=sys.stderr)
+        return config_error_exit_code()
+
+    plugin_overrides = plugin_mgr.load_config_plugins(plugin_config=config.plugins)
+    if plugin_overrides:
+        try:
             merged_overrides = dict(plugin_overrides)
             merged_overrides.update(_build_overrides(args))
             from behave_lint.configuration.loader import load_config
@@ -197,11 +245,18 @@ def _run_lint(args: CLIArgs, paths: list[str], config: Config | None = None) -> 
                 config_path=_config_path_arg(args),
                 overrides=merged_overrides or None,
             )
-    except Exception as exc:
-        print(f"Configuration error: {exc}", file=sys.stderr)
-        return config_error_exit_code()
+        except Exception as exc:
+            print(f"Configuration error: {exc}", file=sys.stderr)
+            return config_error_exit_code()
 
     plugin_mgr.load_all(plugin_config=config.plugins)
+
+    # Catch typos and stale rule IDs early: referencing an unknown rule
+    # must not silently lint with zero rules.
+    id_error = _validate_rule_ids(config, registry)
+    if id_error is not None:
+        print(f"Configuration error: {id_error}", file=sys.stderr)
+        return config_error_exit_code()
 
     if args.verbose:
         print(

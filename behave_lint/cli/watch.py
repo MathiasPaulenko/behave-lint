@@ -78,10 +78,18 @@ class WatchMode:
 
         handler = _FeatureFileHandler(self)
         observer = Observer()
+        scheduled = 0
         for path in self.paths:
             p = Path(path)
             watch_path = str(p if p.is_dir() else p.parent)
+            if not Path(watch_path).exists():
+                print(f"Warning: cannot watch non-existent path '{path}'")
+                continue
             observer.schedule(handler, watch_path, recursive=True)
+            scheduled += 1
+        if scheduled == 0:
+            print("Nothing to watch: no existing paths given.")
+            return 2
         observer.start()
 
         try:
@@ -116,7 +124,7 @@ class WatchMode:
         Args:
             file_path: Path to the changed file.
         """
-        if not file_path.endswith(".feature"):
+        if not file_path.lower().endswith(".feature"):
             return
         print(f"  Change detected: {file_path}")
         self._lint_once()
