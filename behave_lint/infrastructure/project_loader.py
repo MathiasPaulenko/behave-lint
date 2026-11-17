@@ -57,11 +57,11 @@ def load_features(
     errors: list[tuple[str, str]] = []
 
     for file_path in file_paths:
-        feature = load_single(file_path, language=language)
+        feature, error = _load_single_detail(file_path, language=language)
         if feature is not None:
             features.append(feature)
         else:
-            errors.append((file_path, "Failed to parse feature file"))
+            errors.append((file_path, error))
 
     return LoadResult(features=features, errors=errors)
 
@@ -80,19 +80,42 @@ def load_single(
     Returns:
         A Feature model, or None if parsing failed.
     """
+    feature, _error = _load_single_detail(file_path, language=language)
+    return feature
+
+
+def _load_single_detail(
+    file_path: str,
+    *,
+    language: str | None = None,
+) -> tuple[Any | None, str]:
+    """Load a feature file, returning the model or an error message.
+
+    Args:
+        file_path: Path to the .feature file.
+        language: Optional Gherkin language.
+
+    Returns:
+        A tuple of (Feature model or None, error message). The error
+        message is empty on success.
+    """
     path = Path(file_path)
-    if not path.exists() or not path.is_file():
+    try:
+        exists = path.exists() and path.is_file()
+    except OSError:
+        exists = False
+    if not exists:
         logger.warning("Feature file not found: %s", file_path)
-        return None
+        return None, "file not found"
 
     try:
-        return load_feature(str(path), language=language)
+        return load_feature(str(path), language=language), ""
     except BehaveModelError as exc:
         logger.warning("Parse error in '%s': %s", file_path, exc)
-        return None
+        return None, str(exc)
     except Exception as exc:
         logger.warning("Unexpected error loading '%s': %s", file_path, exc)
-        return None
+        return None, f"{type(exc).__name__}: {exc}"
 
 
 def get_file_path_from_feature(feature: Any) -> str:

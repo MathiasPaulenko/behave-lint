@@ -7,7 +7,12 @@ Handles both individual files and directory trees.
 from __future__ import annotations
 
 import fnmatch
+import logging
+import os
+from collections.abc import Iterator
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def discover_files(
@@ -28,22 +33,50 @@ def discover_files(
     result: set[str] = set()
 
     for raw_path in paths:
-        path = Path(raw_path)
-
-        if not path.exists():
+        try:
+            path = Path(raw_path)
+            if not path.exists():
+                continue
+        except (OSError, ValueError):
+            logger.warning("Skipping invalid path: %r", raw_path)
             continue
 
         if path.is_file():
             if _is_feature_file(path) and not _is_excluded(path, exclude_patterns):
                 result.add(str(path))
         elif path.is_dir():
-            for found in path.rglob("*"):
-                if not found.is_file() or not _is_feature_file(found):
+            for found in _iter_tree(path):
+                if not _is_feature_file(found):
                     continue
                 if not _is_excluded(found, exclude_patterns):
                     result.add(str(found))
 
     return sorted(result)
+
+
+def _iter_tree(root: Path) -> Iterator[Path]:
+    """Yield regular files under ``root``, tolerating OS errors.
+
+    Args:
+        root: Directory to walk.
+
+    Yields:
+        Paths to files. Entries that raise ``OSError`` (permissions,
+        broken symlinks, races) are skipped with a warning while the
+        rest of the tree is still traversed.
+    """
+
+    def _on_walk_error(exc: OSError) -> None:
+        logger.warning("Skipping unreadable directory: %s", exc)
+
+    for dirpath, _dirnames, filenames in os.walk(root, onerror=_on_walk_error):
+        for name in filenames:
+            found = Path(dirpath) / name
+            try:
+                if found.is_file():
+                    yield found
+            except OSError as exc:
+                logger.warning("Skipping unreadable path %s: %s", found, exc)
 
 
 def _is_feature_file(path: Path) -> bool:

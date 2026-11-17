@@ -78,19 +78,23 @@ def load_step_definitions(path: str) -> list[StepDefinition]:
         Unparseable files are skipped with a warning.
     """
     root = Path(path)
-    if root.is_file() and root.suffix == ".py":
-        candidates = [root]
-    elif root.is_dir():
-        candidates = sorted(root.rglob("*.py"))
-    else:
-        logger.warning("Step definitions path not found: %s", path)
+    try:
+        if root.is_file() and root.suffix == ".py":
+            candidates = [root]
+        elif root.is_dir():
+            candidates = sorted(root.rglob("*.py"))
+        else:
+            logger.warning("Step definitions path not found: %s", path)
+            return []
+    except OSError as exc:
+        logger.warning("Cannot scan step definitions path %s: %s", path, exc)
         return []
 
     defs: list[StepDefinition] = []
     for py_file in candidates:
         try:
             tree = ast.parse(py_file.read_text(encoding="utf-8"), filename=str(py_file))
-        except (OSError, SyntaxError) as exc:
+        except (OSError, SyntaxError, UnicodeDecodeError, ValueError) as exc:
             logger.warning("Cannot parse step definitions file %s: %s", py_file, exc)
             continue
         for node in ast.walk(tree):

@@ -10,6 +10,7 @@ Coordinates the entire linting process:
 
 from __future__ import annotations
 
+import logging
 import time
 from pathlib import Path
 
@@ -28,6 +29,8 @@ from behave_lint.models.project import Project
 from behave_lint.rules.executor import RuleExecutor
 from behave_lint.rules.registry import RuleRegistry
 from behave_lint.rules.scope import RuleScope
+
+logger = logging.getLogger(__name__)
 
 
 def _make_parse_error_diagnostic(
@@ -170,7 +173,9 @@ class LintEngine:
         for fp in file_paths:
             try:
                 content: str | None = Path(fp).read_text(encoding="utf-8")
-            except OSError:
+            except (OSError, UnicodeDecodeError):
+                # Unreadable or non-UTF-8 files still go through the
+                # parser, which reports them as parse errors (B000).
                 content = None
             if content is not None:
                 all_contents[fp] = content
@@ -231,7 +236,11 @@ class LintEngine:
                 if fp in uncached_contents:
                     file_diags = [d for d in parse_errors if d.file_path == fp]
                     cache_mgr.put(fp, uncached_contents[fp], file_diags)
-            cache_mgr.save()
+            try:
+                cache_mgr.save()
+            except Exception as exc:
+                # A cache write failure must not fail the lint run.
+                logger.warning("Failed to save lint cache: %s", exc)
 
         # 7. Collect and process diagnostics
         collector = DiagnosticCollector(config)
