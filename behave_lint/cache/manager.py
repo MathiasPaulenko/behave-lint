@@ -26,6 +26,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -219,10 +220,14 @@ class CacheManager:
                     "config_hash": entry.config_hash,
                     "diagnostics": [self._serialize_diag(d) for d in entry.diagnostics],
                 }
-            self.cache_file.write_text(
+            # Atomic write: a crash or concurrent run must not leave a
+            # truncated JSON file behind.
+            tmp_file = self.cache_file.with_suffix(".tmp")
+            tmp_file.write_text(
                 json.dumps(data, indent=2, default=str),
                 encoding="utf-8",
             )
+            os.replace(tmp_file, self.cache_file)
         except OSError as exc:
             raise CacheError(f"Failed to write cache: {exc}") from exc
 
@@ -237,15 +242,38 @@ class CacheManager:
             logger.warning("Failed to remove cache file: %s", exc)
 
     def _load(self) -> None:
-        """Load the cache from disk if it exists."""
-        if not self.cache_file.exists():
+        """Load the cache from disk if it exists.
+
+        The cache file is user-writable and may be corrupted or
+        hand-edited. A malformed document starts fresh; malformed
+        individual entries are skipped without losing the rest.
+        """
+        try:
+            if not self.cache_file.exists():
+                return
+        except OSError:
             return
         try:
             data = json.loads(self.cache_file.read_text(encoding="utf-8"))
-            if data.get("version") != _CACHE_FORMAT_VERSION:
-                logger.info("Cache version mismatch, starting fresh")
-                return
-            for file_hash, entry_data in data.get("entries", {}).items():
+        except (json.JSONDecodeError, OSError, UnicodeDecodeError) as exc:
+            logger.warning("Failed to load cache, starting fresh: %s", exc)
+            return
+
+        if not isinstance(data, dict):
+            logger.warning("Malformed cache file (not an object), starting fresh")
+            return
+        if data.get("version") != _CACHE_FORMAT_VERSION:
+            logger.info("Cache version mismatch, starting fresh")
+            return
+        entries = data.get("entries")
+        if not isinstance(entries, dict):
+            logger.warning("Malformed cache entries, starting fresh")
+            return
+
+        for file_hash, entry_data in entries.items():
+            try:
+                if not isinstance(entry_data, dict):
+                    raise TypeError("entry is not an object")
                 diagnostics = [
                     self._deserialize_diag(d) for d in entry_data.get("diagnostics", [])
                 ]
@@ -255,9 +283,8 @@ class CacheManager:
                     diagnostics=diagnostics,
                     file_path=entry_data.get("file_path", ""),
                 )
-        except (json.JSONDecodeError, OSError) as exc:
-            logger.warning("Failed to load cache, starting fresh: %s", exc)
-            self._entries.clear()
+            except Exception as exc:
+                logger.warning("Skipping malformed cache entry %s: %s", file_hash, exc)
 
     @staticmethod
     def _serialize_diag(diag: Diagnostic) -> dict[str, Any]:
