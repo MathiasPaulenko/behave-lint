@@ -109,6 +109,31 @@ def merge_configs(
     return result
 
 
+def _validate_str_list(key: str, value: object) -> list[str]:
+    """Validate that a config value is a list of strings.
+
+    Args:
+        key: Configuration key (for error reporting).
+        value: The value to validate.
+
+    Returns:
+        The list of strings.
+
+    Raises:
+        InvalidConfigValueError: If any element is not a string.
+    """
+    if not isinstance(value, list):
+        return []
+    for item in value:
+        if not isinstance(item, str):
+            raise InvalidConfigValueError(
+                key=key,
+                value=value,
+                expected="list of strings",
+            )
+    return list(value)
+
+
 def build_config(merged: dict[str, object]) -> Config:
     """Build a Config object from a merged configuration dict.
 
@@ -145,12 +170,8 @@ def build_config(merged: dict[str, object]) -> Config:
     if step_definitions == "" or step_definitions is None:
         step_definitions = None
 
-    select = merged.get("select", [])
-    if not isinstance(select, list):
-        select = []
-    ignore = merged.get("ignore", [])
-    if not isinstance(ignore, list):
-        ignore = []
+    select = _validate_str_list("select", merged.get("select", []))
+    ignore = _validate_str_list("ignore", merged.get("ignore", []))
 
     profile = merged.get("profile", "none")
     if not isinstance(profile, str):
@@ -162,17 +183,16 @@ def build_config(merged: dict[str, object]) -> Config:
 
         group = parse_groups(group_raw)
     elif isinstance(group_raw, list):
-        group = list(group_raw)
+        group = _validate_str_list("group", group_raw)
     else:
         group = []
 
     paths = merged.get("paths", ["features/"])
     if not isinstance(paths, list):
         paths = ["features/"]
+    paths = _validate_str_list("paths", paths)
 
-    exclude = merged.get("exclude", [])
-    if not isinstance(exclude, list):
-        exclude = []
+    exclude = _validate_str_list("exclude", merged.get("exclude", []))
 
     plugins = merged.get("plugins", {})
     if not isinstance(plugins, dict):
@@ -295,7 +315,9 @@ def _resolve_extends(
     raw = load_toml_config(parent_path)
     if not raw:
         # Plain TOML file without a [tool.behave-lint] section — treat
-        # the whole document as behave-lint configuration.
+        # the whole document as behave-lint configuration. A document
+        # that *does* have a [tool] table is a pyproject-style file and
+        # is missing the required section instead.
         import tomllib
 
         try:
@@ -305,6 +327,18 @@ def _resolve_extends(
             raise ConfigError(
                 f"Invalid TOML in extended configuration file '{parent_path}': {exc}"
             ) from exc
+        except OSError as exc:
+            raise ConfigError(
+                f"Cannot read extended configuration file '{parent_path}': {exc}"
+            ) from exc
+        is_pyproject = parent_path.name == "pyproject.toml" or (
+            isinstance(data, dict) and isinstance(data.get("tool"), dict)
+        )
+        if is_pyproject:
+            raise ConfigError(
+                f"Extended configuration file '{extends}' has no "
+                f"[tool.behave-lint] section."
+            )
         raw = data if isinstance(data, dict) else {}
 
     check_unknown_keys(raw)
@@ -385,37 +419,6 @@ def load_config(
         merged = merge_configs(merged, profile_config)
         merged["profile"] = profile_name
 
-    # 4b. Determine groups from highest-precedence source:
-    #     CLI overrides > env > pyproject.toml > defaults
-    group_names: list[str] = []
-    if overrides is not None:
-        group_raw = overrides.get("group", [])
-        if isinstance(group_raw, str):
-            from behave_lint.configuration.groups import parse_groups
-
-            group_names = parse_groups(group_raw)
-        elif isinstance(group_raw, list):
-            group_names = list(group_raw)
-    if not group_names:
-        env_source = env if env is not None else os.environ
-        env_group = env_source.get(f"{ENV_PREFIX}GROUP")
-        if env_group:
-            from behave_lint.configuration.groups import parse_groups
-
-            group_names = parse_groups(env_group)
-    if not group_names:
-        toml_group = toml_config.get("group", [])
-        if isinstance(toml_group, str):
-            from behave_lint.configuration.groups import parse_groups
-
-            group_names = parse_groups(toml_group)
-        elif isinstance(toml_group, list):
-            group_names = list(toml_group)
-
-    # 4c. Record group names for later expansion
-    if group_names:
-        merged["group"] = group_names
-
     # 5. pyproject.toml values (override profile)
     if toml_config:
         merged = merge_configs(merged, toml_config)
@@ -428,6 +431,10 @@ def load_config(
     if overrides is not None:
         normalized_overrides = normalize_keys(overrides)
         merged = merge_configs(merged, normalized_overrides)
+
+    # The resolved profile wins over TOML for the stored field —
+    # env/CLI sources already resolved it at step 3.
+    merged["profile"] = profile_name
 
     # 8. Expand groups to rule IDs (after all merges, additive to select)
     final_groups = merged.get("group", [])
@@ -473,9 +480,7 @@ def load_config(
                             group_rule_ids.add(rule_id)
 
         if group_rule_ids:
-            existing_select = merged.get("select", [])
-            if not isinstance(existing_select, list):
-                existing_select = []
+            existing_select = _validate_str_list("select", merged.get("select", []))
             merged["select"] = sorted(
                 set(existing_select) | group_rule_ids,
             )

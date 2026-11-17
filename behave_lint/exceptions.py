@@ -43,7 +43,7 @@ class InvalidConfigValueError(ConfigError):
         expected: Description of valid values.
     """
 
-    def __init__(self, key: str, value: str, expected: str) -> None:
+    def __init__(self, key: str, value: object, expected: str) -> None:
         self.key = key
         self.value = value
         self.expected = expected

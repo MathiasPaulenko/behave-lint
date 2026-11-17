@@ -38,7 +38,13 @@ def find_config_file(
     """
     if explicit_path is not None:
         path = Path(explicit_path)
-        if not path.exists():
+        try:
+            exists = path.exists()
+        except (OSError, ValueError) as exc:
+            raise ConfigError(
+                f"Invalid configuration path '{explicit_path}': {exc}"
+            ) from exc
+        if not exists:
             raise ConfigError(f"Configuration file not found: {explicit_path}")
         return path
 

@@ -17,6 +17,7 @@ from behave_lint.models.enums import Severity
 _EXPECTED_TYPES: dict[str, type | tuple[type, ...] | None] = {
     "select": list,
     "ignore": list,
+    "group": (list, str),
     "profile": str,
     "severity": dict,
     "output": str,
