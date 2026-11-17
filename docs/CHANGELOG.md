@@ -7,6 +7,89 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.6.1] - 2026-10-24
+
+### Fixed
+
+- **Non-UTF-8 feature files** — a `.feature` file that could not be
+  decoded as UTF-8 crashed the whole run with `UnicodeDecodeError`.
+  Unreadable files now produce a `B000` parse diagnostic and parsing
+  continues; the diagnostic also carries the real parser error
+  instead of a generic message.
+- **File discovery** — `PermissionError`, `ValueError` (e.g. null
+  bytes) and mid-tree `OSError`s no longer abort the walk; sibling
+  paths are still processed.
+- **Step-definition loader** — the same resilience fixes apply to
+  `load_step_definitions`: traversal, read, decode and `ast.parse`
+  errors skip the offending file with a warning.
+- **Rule executor** — a malformed or non-`Diagnostic` item from a
+  cross-file rule could crash the entire run; each diagnostic is now
+  stamped independently and invalid ones are dropped. Explicit
+  per-diagnostic severities are preserved (configured overrides
+  still win), and `max_workers < 1` no longer fails pool creation.
+- **Lint cache** — malformed JSON or corrupted individual entries no
+  longer break the cache: the file starts fresh and bad entries are
+  skipped. Cache writes are atomic and a save failure no longer
+  fails the lint run.
+- **Unknown rule IDs** — typos in `select`, `ignore`, `severity` or
+  `rules` were silently ignored (linting with zero rules). They are
+  now a configuration error with a did-you-mean suggestion. `B000`
+  remains a valid ID.
+- **Inline disables** — `# behave-lint: on RULE` inside a global
+  `off` re-enabled *all* rules instead of just that one, and
+  directives inside Gherkin docstrings were treated as real
+  comments. Both semantics are fixed. `exclude` matching now aligns
+  with file discovery (prefix and basename semantics).
+- **Configuration** — `BEHAVE_LINT_GROUP` now beats a TOML `group`
+  per the documented precedence; `extends` pointing to a
+  `pyproject.toml` without a `[tool.behave-lint]` section raises a
+  clear error; non-string elements in list keys and a non-list/str
+  `group` are validation errors instead of `TypeError`s; an explicit
+  config path with invalid characters raises `ConfigError`.
+- **Plugins** — config-provider plugins now honor the `plugins`
+  enable/disable map and receive `plugin_config`; `register_rules`
+  accepts rule instances; dotted entry-point attributes
+  (`module:a.b.c`) are resolved.
+- **Auto-fix** — file writes are atomic (temp file + `os.replace`)
+  and preserve the original line endings (CRLF/CR no longer become
+  LF). `KeywordOrderingRule` no longer detaches docstrings/data
+  tables from their step or crashes on unknown keywords, and tag
+  replacements (BC004, BS001) can no longer mangle a sibling tag
+  sharing a substring.
+- **Builtin rules** — `BS006`/`BS007`/`BS008` no longer scan or
+  rewrite Gherkin docstring content; the i18n locale pattern now
+  matches real `€`/`$` amounts (the `\b` anchor made them dead code);
+  a dead expression was removed from `BK003`.
+- **Reporters** — SARIF artifact URIs always use forward slashes;
+  console padding is computed on plain text so ANSI codes don't skew
+  alignment; Markdown tables escape `|` in file paths; writing
+  multiple file-capable formats to a single `--output-file` is a
+  clear error.
+- **Models** — `LintResult.has_errors`/`has_diagnostics` reflect the
+  actual diagnostics list, and `Diagnostic` rejects
+  `end_column < column` on the same line.
+- **Watch mode** — `.FEATURE` (and other casings) triggers re-lint,
+  and non-existent watch paths are skipped with a warning instead of
+  crashing.
+- **LSP** — config resolution now starts from the document's
+  directory instead of the server process cwd, and the server no
+  longer writes `.behave-lint-cache` files.
+- **Docs build** — `mkdocstrings[python]>=1.0.7` is required:
+  `pymdown-extensions` 12.2+ made `md` a required `Highlight`
+  argument, which broke `mkdocstrings` 1.0.4–1.0.6.
+
+### Security
+
+- Development dependencies updated for published CVEs
+  (`mkdocs-material`, `pip`, `pymdown-extensions`, `urllib3`,
+  `virtualenv`).
+
+## [2.6.0] - 2026-10-16
+
+### Added
+
+- GitHub Action for running behave-lint in CI.
+
 ## [2.5.0] - 2026-10-02
 
 ### Fixed
