@@ -9,12 +9,14 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from functools import lru_cache
 
 _STEP_KEYWORDS = ("given", "when", "then", "step")
 
 _PARAM_PATTERN = re.compile(r"\{[^{}]+\}")
 
 
+@lru_cache(maxsize=512)
 def pattern_to_regex(pattern: str) -> re.Pattern[str]:
     """Convert a behave step pattern into a compiled regex.
 

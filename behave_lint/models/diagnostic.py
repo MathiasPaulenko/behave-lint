@@ -54,6 +54,16 @@ class Diagnostic:
             )
         if self.end_column is not None and self.column is None:
             raise ValueError("end_column requires column to be set")
+        if (
+            self.end_line == self.line
+            and self.end_column is not None
+            and self.column is not None
+            and self.end_column < self.column
+        ):
+            raise ValueError(
+                f"end_column ({self.end_column}) must be >= column "
+                f"({self.column}) on the same line"
+            )
 
     @property
     def location(self) -> str:

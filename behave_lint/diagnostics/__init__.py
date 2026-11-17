@@ -9,6 +9,7 @@ from behave_lint.diagnostics.collector import DiagnosticCollector
 from behave_lint.diagnostics.dedup import deduplicate_diagnostics
 from behave_lint.diagnostics.filters import (
     DisableRegion,
+    EnableRegion,
     filter_by_severity,
     filter_disabled_rules,
     filter_excluded_files,
@@ -24,6 +25,7 @@ from behave_lint.diagnostics.validation import (
 __all__ = [
     "DiagnosticCollector",
     "DisableRegion",
+    "EnableRegion",
     "deduplicate_diagnostics",
     "filter_by_severity",
     "filter_disabled_rules",

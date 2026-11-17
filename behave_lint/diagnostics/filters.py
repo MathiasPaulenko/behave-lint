@@ -45,6 +45,16 @@ class DisableRegion:
         self.end_line = end_line
         self.rule_ids = rule_ids or frozenset()
 
+    def _covers(self, rule_id: str, line: int) -> bool:
+        """Whether the region's range and rule set cover ``rule_id``."""
+        if line < self.start_line:
+            return False
+        if self.end_line is not None and line > self.end_line:
+            return False
+        if not self.rule_ids:
+            return True
+        return rule_id in self.rule_ids
+
     def is_disabled(self, rule_id: str, line: int) -> bool:
         """Check if a rule at a given line is within this disable region.
 
@@ -56,13 +66,44 @@ class DisableRegion:
             True if the diagnostic is within this disable region and
             the rule is affected.
         """
-        if line < self.start_line:
-            return False
-        if self.end_line is not None and line > self.end_line:
-            return False
-        if not self.rule_ids:
-            return True
-        return rule_id in self.rule_ids
+        return self._covers(rule_id, line)
+
+
+class EnableRegion(DisableRegion):
+    """A region where specific rules are re-enabled inside a global
+    disable (``# behave-lint: on RULE`` while ``off`` is active).
+
+    Enable regions never suppress diagnostics themselves; they carve
+    exceptions out of overlapping ``DisableRegion`` objects.
+    """
+
+    def is_disabled(self, rule_id: str, line: int) -> bool:
+        """Enable regions never disable a rule.
+
+        Args:
+            rule_id: The rule ID to check.
+            line: The line number of the diagnostic.
+
+        Returns:
+            Always False.
+        """
+        return False
+
+    def reenables(self, rule_id: str, line: int) -> bool:
+        """Whether this region re-enables ``rule_id`` at ``line``.
+
+        Args:
+            rule_id: The rule ID to check.
+            line: The line number of the diagnostic.
+
+        Returns:
+            True if the line is inside the region and the rule is
+            listed in it.
+        """
+        return bool(self.rule_ids) and self._covers(rule_id, line)
+
+
+_DOCSTRING_DELIMITERS = ('"""', "'''", "```")
 
 
 def parse_disable_comments(
@@ -71,63 +112,114 @@ def parse_disable_comments(
     """Parse inline disable comments from feature file lines.
 
     Supported comment forms:
-    - `# behave-lint: off` — disables all rules for the next block.
-    - `# behave-lint: off BC001` — disables specific rule.
+    - `# behave-lint: off` — disables all rules from the next line on.
+    - `# behave-lint: off BC001` — disables specific rule(s).
     - `# behave-lint: off BC001,BS001` — disables multiple rules.
-    - `# behave-lint: on` — re-enables all rules.
-    - `# behave-lint: on BC001` — re-enables specific rule.
+    - `# behave-lint: on` — re-enables everything.
+    - `# behave-lint: on BC001` — re-enables only that rule; other
+      rules stay disabled if a global or specific ``off`` is active.
+
+    Directives appearing inside Gherkin docstrings (``\"\"\"``, ``'''``
+    or ````` ``` ```` blocks) are ignored — they are content, not comments.
 
     Args:
         lines: Lines of the feature file.
 
     Returns:
-        List of DisableRegion objects.
+        List of regions. ``EnableRegion`` items express re-enabled
+        rules inside a global disable; all other items are
+        ``DisableRegion`` objects.
     """
     regions: list[DisableRegion] = []
-    open_disables: dict[frozenset[str] | None, int] = {}
+    global_off_start: int | None = None
+    specific_off: dict[str, int] = {}
+    reenabled: dict[str, int] = {}
+    in_docstring = False
 
     for i, line in enumerate(lines, start=1):
+        stripped = line.strip()
+        if any(stripped.startswith(d) for d in _DOCSTRING_DELIMITERS):
+            in_docstring = not in_docstring
+            continue
+        if in_docstring:
+            continue
+
         match = _DISABLE_PATTERN.search(line)
         if match is None:
             continue
 
         action = match.group(1).lower()
         rules_str = match.group(2)
-
-        rule_ids: frozenset[str] | None = None
-        if rules_str:
-            rule_ids = frozenset(r.strip().upper() for r in rules_str.split(","))
-
-        if action == "off":
-            open_disables[rule_ids] = i
-        elif action == "on":
-            # Close any open disable with matching rule set
-            keys_to_close = [k for k in open_disables if k == rule_ids or k is None]
-            if rule_ids is None:
-                # "on" closes everything
-                keys_to_close = list(open_disables.keys())
-            for key in keys_to_close:
-                start = open_disables.pop(key, None)
-                if start is not None:
-                    regions.append(
-                        DisableRegion(
-                            start_line=start,
-                            end_line=i,
-                            rule_ids=key,
-                        )
-                    )
-
-    # Close any remaining open disables (until end of file)
-    for rule_set, start in open_disables.items():
-        regions.append(
-            DisableRegion(
-                start_line=start,
-                end_line=None,
-                rule_ids=rule_set,
-            )
+        rule_ids = (
+            [r.strip().upper() for r in rules_str.split(",")] if rules_str else None
         )
 
-    return regions
+        if action == "off":
+            if rule_ids is None:
+                if global_off_start is None:
+                    global_off_start = i
+            else:
+                for rid in rule_ids:
+                    enable_start = reenabled.pop(rid) if rid in reenabled else None
+                    if enable_start is not None:
+                        regions.append(EnableRegion(enable_start, i, frozenset({rid})))
+                    specific_off.setdefault(rid, i)
+        else:
+            if rule_ids is None:
+                if global_off_start is not None:
+                    regions.append(DisableRegion(global_off_start, i, frozenset()))
+                    global_off_start = None
+                for rid, start in specific_off.items():
+                    regions.append(DisableRegion(start, i, frozenset({rid})))
+                specific_off.clear()
+                for rid, start in reenabled.items():
+                    regions.append(EnableRegion(start, i, frozenset({rid})))
+                reenabled.clear()
+            else:
+                for rid in rule_ids:
+                    off_start = specific_off.pop(rid) if rid in specific_off else None
+                    if off_start is not None:
+                        regions.append(DisableRegion(off_start, i, frozenset({rid})))
+                    elif global_off_start is not None:
+                        reenabled.setdefault(rid, i)
+
+    if global_off_start is not None:
+        regions.append(DisableRegion(global_off_start, None, frozenset()))
+    for rid, start in specific_off.items():
+        regions.append(DisableRegion(start, None, frozenset({rid})))
+    for rid, start in reenabled.items():
+        regions.append(EnableRegion(start, None, frozenset({rid})))
+
+    return _merge_regions(regions)
+
+
+def _merge_regions(regions: list[DisableRegion]) -> list[DisableRegion]:
+    """Merge regions with identical range and kind into one.
+
+    Directives like ``off BC001,BS001`` are tracked per rule so a
+    later ``on BC001`` can re-enable just one of them; regions that
+    still share the same range are merged back for a compact result.
+
+    Args:
+        regions: Regions in emission order.
+
+    Returns:
+        Regions with per-(kind, start, end) rule-id sets unified.
+    """
+    merged: list[DisableRegion] = []
+    for region in regions:
+        for existing in merged:
+            if (
+                type(existing) is type(region)
+                and existing.start_line == region.start_line
+                and existing.end_line == region.end_line
+                and bool(existing.rule_ids) == bool(region.rule_ids)
+            ):
+                existing.rule_ids = existing.rule_ids | region.rule_ids
+                break
+        else:
+            merged.append(region)
+    return merged
 
 
 # --- Filters ---
@@ -209,12 +301,18 @@ def filter_excluded_files(
 
     def is_excluded(path: str) -> bool:
         pure = PurePath(path)
+        normalized = str(pure).replace("\\", "/")
+        name = pure.name
         for pattern in exclude_patterns:
-            if fnmatch.fnmatch(path, pattern):
+            pat = pattern.replace("\\", "/")
+            if fnmatch.fnmatch(path, pat) or fnmatch.fnmatch(normalized, pat):
                 return True
-            # Also match against the path with forward slashes
-            normalized = str(pure).replace("\\", "/")
-            if fnmatch.fnmatch(normalized, pattern):
+            if fnmatch.fnmatch(name, pat):
+                return True
+            # Prefix match, same semantics as file discovery:
+            # "features/wip" excludes that path and anything beneath it.
+            prefix = pat.rstrip("/")
+            if prefix and (normalized == prefix or normalized.startswith(prefix + "/")):
                 return True
         return False
 
@@ -244,6 +342,10 @@ def filter_inline_disables(
         regions = regions_by_file.get(diag.file_path, [])
         is_suppressed = any(
             region.is_disabled(diag.rule_id, diag.line) for region in regions
+        ) and not any(
+            region.reenables(diag.rule_id, diag.line)
+            for region in regions
+            if isinstance(region, EnableRegion)
         )
         if not is_suppressed:
             result.append(diag)
@@ -253,6 +355,7 @@ def filter_inline_disables(
 
 __all__ = [
     "DisableRegion",
+    "EnableRegion",
     "filter_by_severity",
     "filter_disabled_rules",
     "filter_excluded_files",

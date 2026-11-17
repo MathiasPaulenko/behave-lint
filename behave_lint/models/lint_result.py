@@ -106,7 +106,7 @@ class LintResult:
         Returns:
             True if at least one error diagnostic exists.
         """
-        return self.summary.error_count > 0
+        return any(d.is_error for d in self.diagnostics)
 
     @property
     def has_diagnostics(self) -> bool:
@@ -115,7 +115,7 @@ class LintResult:
         Returns:
             True if the diagnostics list is non-empty.
         """
-        return self.summary.total_diagnostics > 0
+        return bool(self.diagnostics)
 
     @property
     def passed(self) -> bool:

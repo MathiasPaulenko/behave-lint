@@ -30,6 +30,14 @@ def validate_diagnostic(diag: Diagnostic) -> bool:
         True if valid, False otherwise. Invalid diagnostics emit
         a warning describing the issue.
     """
+    if not isinstance(diag, Diagnostic):
+        warnings.warn(
+            f"Invalid diagnostic: expected Diagnostic, got "
+            f"{type(diag).__name__}. Dropping.",
+            stacklevel=2,
+        )
+        return False
+
     if not diag.rule_id or not isinstance(diag.rule_id, str):
         warnings.warn(
             f"Invalid diagnostic: rule_id must be a non-empty string, "
