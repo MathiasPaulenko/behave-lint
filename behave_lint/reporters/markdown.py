@@ -85,9 +85,10 @@ class MarkdownReporter(Reporter):
         for diag in result.diagnostics:
             severity = f"{self._severity_emoji(diag.severity)} {diag.severity.value}"
             message = diag.message.replace("|", "\\|")
+            file_path = diag.file_path.replace("|", "\\|")
+            rule_id = diag.rule_id.replace("|", "\\|")
             lines.append(
-                f"| {diag.file_path} | {diag.line} | "
-                f"{diag.rule_id} | {severity} | {message} |"
+                f"| {file_path} | {diag.line} | {rule_id} | {severity} | {message} |"
             )
 
         return "\n".join(lines)

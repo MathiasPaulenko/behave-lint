@@ -8,7 +8,10 @@ and --unsafe-fixes (safe + unsafe). Dry-run mode previews without writing.
 
 from __future__ import annotations
 
+import contextlib
 import logging
+import os
+import tempfile
 from pathlib import Path
 
 from behave_lint.autofix.models import FixEdit, FixRecord, FixResult
@@ -180,14 +183,20 @@ class FixCoordinator:
         path = Path(file_path)
 
         try:
-            content = path.read_text(encoding="utf-8")
-        except OSError as exc:
+            raw_bytes = path.read_bytes()
+            content = raw_bytes.decode("utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
             logger.warning("Failed to read '%s': %s", file_path, exc)
             return [
                 FixRecord(edit=e, status="failed", reason=str(exc)) for e in edits
             ], False
 
-        lines = content.splitlines(keepends=True)
+        # ``content`` is newline-normalized for old_text comparison (same
+        # as Path.read_text); the original EOL style is restored on write.
+        had_crlf = b"\r\n" in raw_bytes
+        had_lone_cr = not had_crlf and b"\r" in raw_bytes
+        normalized = content.replace("\r\n", "\n").replace("\r", "\n")
+        lines = normalized.splitlines(keepends=True)
         records: list[FixRecord] = []
         modified = False
 
@@ -232,10 +241,23 @@ class FixCoordinator:
             records.append(FixRecord(edit=edit, status="applied"))
 
         if modified and not self._dry_run:
+            output = "".join(lines)
+            if had_crlf:
+                output = output.replace("\n", "\r\n")
+            elif had_lone_cr:
+                output = output.replace("\n", "\r")
+            tmp_path: Path | None = None
             try:
-                path.write_text("".join(lines), encoding="utf-8")
+                fd, tmp_name = tempfile.mkstemp(dir=path.parent, prefix=path.name + ".")
+                tmp_path = Path(tmp_name)
+                with os.fdopen(fd, "wb") as tmp_file:
+                    tmp_file.write(output.encode("utf-8"))
+                os.replace(tmp_path, path)
             except OSError as exc:
                 logger.warning("Failed to write '%s': %s", file_path, exc)
+                if tmp_path is not None:
+                    with contextlib.suppress(OSError):
+                        tmp_path.unlink(missing_ok=True)
                 return [
                     FixRecord(edit=e, status="failed", reason=str(exc)) for e in edits
                 ], False

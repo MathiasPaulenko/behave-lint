@@ -118,7 +118,9 @@ class SARIFReporter(Reporter):
             location: dict[str, object] = {
                 "physicalLocation": {
                     "artifactLocation": {
-                        "uri": diag.file_path,
+                        # SARIF URIs always use forward slashes, even
+                        # on Windows (required by GitHub Code Scanning).
+                        "uri": diag.file_path.replace("\\", "/"),
                     },
                     "region": region,
                 },

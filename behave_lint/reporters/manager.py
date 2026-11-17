@@ -109,6 +109,17 @@ class ReporterManager:
             output_file: Path to write output to. If None, writes to
                 stdout. Only used for formats that support file output.
         """
+        if output_file:
+            file_formats = [
+                fmt for fmt in formats if self.get_reporter(fmt).supports_file_output
+            ]
+            if len(file_formats) > 1:
+                raise ValueError(
+                    "Cannot write multiple file-capable formats to a single "
+                    f"output file: {', '.join(file_formats)}. "
+                    "Use a separate --output-file per format."
+                )
+
         for fmt in formats:
             reporter = self.get_reporter(fmt)
             if output_file and not reporter.supports_file_output:

@@ -152,17 +152,36 @@ def _apply_content_changes(
     return content
 
 
-def _build_config_from_workspace() -> Config:
+def _uri_to_dir(file_uri: str) -> Path | None:
+    """Convert a file:// URI to its parent directory, or None."""
+    from urllib.parse import unquote, urlparse
+    from urllib.request import url2pathname
+
+    try:
+        parsed = urlparse(file_uri)
+        if parsed.scheme != "file":
+            return None
+        return Path(url2pathname(unquote(parsed.path))).parent
+    except (ValueError, OSError):
+        return None
+
+
+def _build_config_from_workspace(start_dir: Path | None = None) -> Config:
     """Build a Config from workspace settings merged with defaults.
 
     Reads the global _workspace_config dict (populated by
     workspace/didChangeConfiguration) and passes it as overrides
-    to load_config.
+    to load_config. The cache is disabled — writing cache files is a
+    CLI concern, not something a language server should do.
+
+    Args:
+        start_dir: Directory to resolve project config from (the
+            document's directory). None falls back to the process cwd.
 
     Returns:
         A resolved Config object.
     """
-    overrides: dict[str, object] = {}
+    overrides: dict[str, object] = {"cache": False}
     ws = _workspace_config
     if ws.get("select"):
         overrides["select"] = ws["select"]
@@ -176,7 +195,7 @@ def _build_config_from_workspace() -> Config:
         overrides["severity_overrides"] = ws["severityOverrides"]
     if ws.get("ruleParams"):
         overrides["rule_params"] = ws["ruleParams"]
-    return load_config(overrides=overrides or None)
+    return load_config(overrides=overrides, start_dir=start_dir)
 
 
 def _lint_content(
@@ -194,7 +213,7 @@ def _lint_content(
     Returns:
         A tuple of (LSP diagnostics, fix edits) for this document.
     """
-    config = _build_config_from_workspace()
+    config = _build_config_from_workspace(start_dir=_uri_to_dir(file_uri))
     registry = RuleRegistry()
     from behave_lint.rules.builtin import register_builtins
 
@@ -238,7 +257,7 @@ def _publish_diagnostics(
         content_override: If provided, use this content instead of doc.source
             (used for incremental sync where changes haven't been applied yet).
     """
-    if not doc.uri.endswith(".feature"):
+    if not doc.uri.lower().endswith(".feature"):
         return
 
     content = content_override if content_override is not None else doc.source
@@ -308,7 +327,7 @@ def create_server() -> LanguageServer:
         if isinstance(settings, dict):
             _workspace_config.update(settings)
         for doc in ls.workspace.text_documents.values():
-            if doc.uri.endswith(".feature"):
+            if doc.uri.lower().endswith(".feature"):
                 _publish_diagnostics(ls, doc)
 
     @server.feature(

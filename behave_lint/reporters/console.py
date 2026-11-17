@@ -92,6 +92,9 @@ class ConsoleReporter(Reporter):
     def _format_diagnostic(self, diag: Diagnostic) -> str:
         """Format a single diagnostic for console output.
 
+        Padding is applied to the plain text before colorization so
+        ANSI escape codes don't skew the column alignment.
+
         Args:
             diag: The diagnostic to format.
 
@@ -99,9 +102,20 @@ class ConsoleReporter(Reporter):
             A formatted line string.
         """
         location = diag.location
-        rule_id = self._colorize(diag.rule_id, _AnsiColors.CYAN)
-        severity = self._severity_label(diag.severity)
-        return f"{location:<40}  {rule_id:<8}  {severity:<10}  {diag.message}"
+        plain_id = f"{diag.rule_id:<8}"
+        rule_id = self._colorize(plain_id, _AnsiColors.CYAN)
+        plain_label = {
+            Severity.ERROR: "error",
+            Severity.WARNING: "warning",
+            Severity.INFO: "info",
+        }.get(diag.severity, diag.severity.value)
+        color = {
+            Severity.ERROR: _AnsiColors.RED,
+            Severity.WARNING: _AnsiColors.YELLOW,
+            Severity.INFO: _AnsiColors.BLUE,
+        }.get(diag.severity, "")
+        severity = self._colorize(f"{plain_label:<10}", color)
+        return f"{location:<40}  {rule_id}  {severity}  {diag.message}"
 
     def _format_summary(self, result: LintResult) -> str:
         """Format the summary line.
